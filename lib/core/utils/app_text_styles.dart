@@ -5,7 +5,7 @@ import 'package:smart_contractor_app/core/utils/app_colors.dart';
 class AppTextStyles {
   AppTextStyles._();
 
-  static const String fontFamily = 'HindSiliguri';
+  static const String fontFamily = 'NotoSansBengali';
 
   // Font sizes
   static double get smallSize => 12.sp;
@@ -32,15 +32,11 @@ class AppTextStyles {
   // Small
   // =========================
 
-  static TextStyle get smallBlack => _style(
-    size: smallSize,
-    color: AppColors.textPrimary,
-  );
+  static TextStyle get smallBlack =>
+      _style(size: smallSize, color: AppColors.textPrimary);
 
-  static TextStyle get smallGrey => _style(
-    size: smallSize,
-    color: AppColors.textSecondary,
-  );
+  static TextStyle get smallGrey =>
+      _style(size: smallSize, color: AppColors.textSecondary);
 
   static TextStyle get smallBlackBold => _style(
     size: smallSize,
@@ -58,15 +54,11 @@ class AppTextStyles {
   // Medium
   // =========================
 
-  static TextStyle get mediumBlack => _style(
-    size: mediumSize,
-    color: AppColors.textPrimary,
-  );
+  static TextStyle get mediumBlack =>
+      _style(size: mediumSize, color: AppColors.textPrimary);
 
-  static TextStyle get mediumGrey => _style(
-    size: mediumSize,
-    color: AppColors.textSecondary,
-  );
+  static TextStyle get mediumGrey =>
+      _style(size: mediumSize, color: AppColors.textSecondary);
 
   static TextStyle get mediumBlackBold => _style(
     size: mediumSize,
@@ -84,15 +76,11 @@ class AppTextStyles {
   // Large
   // =========================
 
-  static TextStyle get largeBlack => _style(
-    size: largeSize,
-    color: AppColors.textPrimary,
-  );
+  static TextStyle get largeBlack =>
+      _style(size: largeSize, color: AppColors.textPrimary);
 
-  static TextStyle get largeGrey => _style(
-    size: largeSize,
-    color: AppColors.textSecondary,
-  );
+  static TextStyle get largeGrey =>
+      _style(size: largeSize, color: AppColors.textSecondary);
 
   static TextStyle get largeBlackBold => _style(
     size: largeSize,
@@ -105,4 +93,18 @@ class AppTextStyles {
     color: AppColors.textSecondary,
     weight: FontWeight.w700,
   );
+
+  static TextStyle custom({
+    double? size,
+    Color? color,
+    FontWeight weight = FontWeight.w400,
+    double height = 1.2,
+  }) {
+    return _style(
+      size: size ?? mediumSize,
+      color: color ?? AppColors.textPrimary,
+      weight: weight,
+      height: height,
+    );
+  }
 }

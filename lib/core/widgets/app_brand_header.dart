@@ -47,12 +47,12 @@ class AppBrandHeader extends StatelessWidget {
             children: [
               Text(
                 'স্মার্ট কন্ট্রাক্টর',
-                style: AppTextStyles.largeBlackBold.copyWith(
+                style: AppTextStyles.custom(
                   color: AppColors.primary,
-                  fontSize: 30.sp,
+                  size: 30.sp,
                 ),
               ),
-              Text('Smart Contructor', style: AppTextStyles.largeGrey),
+              Text('Smart Contractor', style: AppTextStyles.largeGrey),
             ],
           ),
         ],
