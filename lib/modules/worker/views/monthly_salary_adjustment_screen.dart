@@ -4,301 +4,180 @@ import 'package:get/get.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
+import 'package:smart_contractor_app/core/widgets/app_text_field.dart';
+import 'package:smart_contractor_app/modules/worker/controllers/worker_controller.dart';
 
-class MonthlySalaryAdjustmentScreen extends StatefulWidget {
+class MonthlySalaryAdjustmentScreen extends StatelessWidget {
   const MonthlySalaryAdjustmentScreen({super.key});
 
-  @override
-  State<MonthlySalaryAdjustmentScreen> createState() =>
-      _MonthlySalaryAdjustmentScreenState();
-}
-
-class _MonthlySalaryAdjustmentScreenState
-    extends State<MonthlySalaryAdjustmentScreen> {
-  final TextEditingController baseSalaryController =
-      TextEditingController(text: '15000');
-  final TextEditingController extraAmountController =
-      TextEditingController(text: '1000');
-  final TextEditingController cutAmountController =
-      TextEditingController(text: '500');
-  final TextEditingController noteController =
-      TextEditingController(text: 'বাড়তি কাজ ও ছুটির সমন্বয়');
-
-  String workerName = 'সোহেল মিয়া';
-  String monthText = 'অক্টোবর ২০২৬';
-  double advanceAmount = 2000;
-
-  DateTime selectedDate = DateTime(2026, 10, 1);
-
-  @override
-  void initState() {
-    super.initState();
-    final args = Get.arguments;
-    if (args is Map<String, dynamic> && args.containsKey('name')) {
-      workerName = args['name'].toString();
-    }
-
-    baseSalaryController.addListener(() => setState(() {}));
-    extraAmountController.addListener(() => setState(() {}));
-    cutAmountController.addListener(() => setState(() {}));
-  }
-
-  @override
-  void dispose() {
-    baseSalaryController.dispose();
-    extraAmountController.dispose();
-    cutAmountController.dispose();
-    noteController.dispose();
-    super.dispose();
-  }
-
-  // Date/Month Picker
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              onSurface: AppColors.textPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        selectedDate = picked;
-      });
-    }
-  }
-
-  String _formatMonth(DateTime date) {
-    const months = [
-      'জানুয়ারি',
-      'ফেব্রুয়ারি',
-      'মার্চ',
-      'এপ্রিল',
-      'মে',
-      'জুন',
-      'জুলাই',
-      'আগস্ট',
-      'সেপ্টেম্বর',
-      'অক্টোবর',
-      'নভেম্বর',
-      'ডিসেম্বর'
-    ];
-    return '${months[date.month - 1]} ${date.year}';
-  }
+  final String workerName = 'সোহেল মিয়া';
+  final String monthText = 'অক্টোবর ২০২৬';
 
   @override
   Widget build(BuildContext context) {
-    final double baseSalary =
-        double.tryParse(baseSalaryController.text.trim()) ?? 0;
-    final double extraAmount =
-        double.tryParse(extraAmountController.text.trim()) ?? 0;
-    final double cutAmount =
-        double.tryParse(cutAmountController.text.trim()) ?? 0;
-
-    final double earnedThisMonth = baseSalary + extraAmount - cutAmount;
-    final double nowDue = (earnedThisMonth - advanceAmount).clamp(0, 9999999);
+    if (!Get.isRegistered<WorkerController>()) {
+      Get.put(WorkerController());
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'মাসিক বেতন ঠিক করুন',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              '$workerName • $monthText',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: AppCustomAppBar(
+        title: 'মাসিক বেতন ঠিক করুন',
+        subtitle: '$workerName • $monthText',
       ),
-      body: SingleChildScrollView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Worker Brief Card
-            _buildWorkerBriefCard(),
+      body: GetBuilder<WorkerController>(
+        builder: (controller) {
+          final double baseSalary =
+              double.tryParse(controller.monthlySalaryController.text.trim()) ?? 0;
+          final double extraAmount =
+              double.tryParse(controller.extraController.text.trim()) ?? 0;
+          final double cutAmount =
+              double.tryParse(controller.cutController.text.trim()) ?? 0;
+          final double advanceAmount =
+              double.tryParse(controller.advanceController.text.trim()) ?? 0;
 
-            SizedBox(height: 14.h),
+          final double earnedThisMonth = baseSalary + extraAmount - cutAmount;
+          final double nowDue = (earnedThisMonth - advanceAmount).clamp(0, 9999999);
 
-            // 2. Month Selector Box
-            Text('মাস', style: AppTextStyles.mediumBlackBold),
-            SizedBox(height: 6.h),
-            _buildMonthSelectorBox(),
-
-            SizedBox(height: 14.h),
-
-            // 3. Base Monthly Salary Field
-            Text('এই মাসের বেতন', style: AppTextStyles.mediumBlackBold),
-            SizedBox(height: 6.h),
-            _buildInputField(
-              controller: baseSalaryController,
-              hint: '১৫,০০০',
-              suffixText: 'টাকা',
-              icon: Icons.payments_outlined,
-              keyboardType: TextInputType.number,
-            ),
-
-            SizedBox(height: 14.h),
-
-            // 4. Side-by-Side Extra Amount & Cut Amount Fields
-            Row(
+          return SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('বাড়তি টাকা', style: AppTextStyles.mediumBlackBold),
-                      SizedBox(height: 6.h),
-                      _buildSimpleInput(
-                        controller: extraAmountController,
+                // 1. Worker Brief Card
+                _buildWorkerBriefCard(controller),
+
+                SizedBox(height: 14.h),
+
+                // 2. Base Monthly Salary Field
+                AppTextField(
+                  label: 'এই মাসের বেতন',
+                  controller: controller.monthlySalaryController,
+                  icon: Icons.payments_outlined,
+                  hint: '১৫,০০০',
+                  suffixText: 'টাকা',
+                  keyboardType: TextInputType.number,
+                ),
+
+                SizedBox(height: 14.h),
+
+                // 3. Side-by-Side Extra Amount & Cut Amount Fields
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        label: 'বাড়তি টাকা',
+                        controller: controller.extraController,
                         hint: '১,০০০',
                         keyboardType: TextInputType.number,
                       ),
-                    ],
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('কাটার টাকা', style: AppTextStyles.mediumBlackBold),
-                      SizedBox(height: 6.h),
-                      _buildSimpleInput(
-                        controller: cutAmountController,
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: AppTextField(
+                        label: 'কাটার টাকা',
+                        controller: controller.cutController,
                         hint: '৫০০',
                         keyboardType: TextInputType.number,
                       ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 14.h),
+
+                // 4. Reason / Note Field
+                AppTextField(
+                  label: 'কারণ / নোট',
+                  controller: controller.adjustNoteController,
+                  hint: 'বাড়তি কাজ ও ছুটির সমন্বয়',
+                ),
+
+                SizedBox(height: 14.h),
+
+                // 5. Calculated Salary Summary Card
+                AppCard(
+                  child: Column(
+                    children: [
+                      _buildSummaryRow(
+                          'এই মাসে জমা হবে',
+                          '৳${earnedThisMonth.toStringAsFixed(0)}',
+                          AppColors.primary),
+                      Divider(height: 16.h, color: AppColors.border),
+                      _buildSummaryRow(
+                          'আগে দেওয়া অগ্রিম',
+                          '৳${advanceAmount.toStringAsFixed(0)}',
+                          AppColors.textPrimary),
+                      Divider(height: 16.h, color: AppColors.border),
+                      _buildSummaryRow('এখন দিতে হবে',
+                          '৳${nowDue.toStringAsFixed(0)}', Colors.red),
                     ],
                   ),
                 ),
+
+                SizedBox(height: 14.h),
+
+                // 6. Info Notice Box
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: AppColors.primary,
+                        size: 20.sp,
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          'একই মাসের হিসাব এডিট করলে আগের এন্ট্রি আপডেট হবে; আবার যোগ হবে না।',
+                          style: AppTextStyles.custom(
+                            size: 12.sp,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 24.h),
+
+                // 7. Bottom Action Save Button
+                AppPrimaryButton(
+                  onPressed: () {
+                    Get.snackbar(
+                      'বেতন হিসাব সংরক্ষিত',
+                      'মাসের বেতন হিসাব সফলভাবে সেভ করা হয়েছে',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: AppColors.primary,
+                      colorText: Colors.white,
+                    );
+                    Future.delayed(const Duration(milliseconds: 600), () {
+                      Get.back();
+                    });
+                  },
+                  text: 'মাসের বেতন সেভ',
+                  icon: Icons.check_rounded,
+                ),
               ],
             ),
-
-            SizedBox(height: 14.h),
-
-            // 5. Reason / Note Field
-            Text('কারণ / নোট', style: AppTextStyles.mediumBlackBold),
-            SizedBox(height: 6.h),
-            _buildSimpleInput(
-              controller: noteController,
-              hint: 'বাড়তি কাজ ও ছুটির সমন্বয়',
-            ),
-
-            SizedBox(height: 14.h),
-
-            // 6. Calculated Salary Summary Card
-            AppCard(
-              child: Column(
-                children: [
-                  _buildSummaryRow(
-                      'এই মাসে জমা হবে',
-                      '৳${earnedThisMonth.toStringAsFixed(0)}',
-                      AppColors.primary),
-                  Divider(height: 16.h, color: AppColors.border),
-                  _buildSummaryRow(
-                      'আগে দেওয়া অগ্রিম',
-                      '৳${advanceAmount.toStringAsFixed(0)}',
-                      AppColors.textPrimary),
-                  Divider(height: 16.h, color: AppColors.border),
-                  _buildSummaryRow('এখন দিতে হবে',
-                      '৳${nowDue.toStringAsFixed(0)}', Colors.red),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 14.h),
-
-            // 7. Info Notice Box
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    color: AppColors.primary,
-                    size: 20.sp,
-                  ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      'একই মাসের হিসাব এডিট করলে আগের এন্ট্রি আপডেট হবে; আবার যোগ হবে না।',
-                      style: AppTextStyles.custom(
-                        size: 12.sp,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 24.h),
-
-            // 8. Bottom Action Save Button
-            AppPrimaryButton(
-              onPressed: () {
-                Get.snackbar(
-                  'বেতন হিসাব সংরক্ষিত',
-                  'মাসের বেতন হিসাব সফলভাবে সেভ করা হয়েছে',
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: AppColors.primary,
-                  colorText: Colors.white,
-                );
-                Future.delayed(const Duration(milliseconds: 600), () {
-                  Get.back();
-                });
-              },
-              text: 'মাসের বেতন সেভ',
-              icon: Icons.check_rounded,
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   // Worker Brief Card
-  Widget _buildWorkerBriefCard() {
+  Widget _buildWorkerBriefCard(WorkerController controller) {
     return AppCard(
       child: Row(
         children: [
@@ -326,113 +205,13 @@ class _MonthlySalaryAdjustmentScreenState
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  'মাসিক কর্মী • বেতন ৳${baseSalaryController.text}',
+                  'মাসিক কর্মী • বেতন ৳${controller.monthlySalaryController.text}',
                   style: AppTextStyles.smallGrey,
                 ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // Month Selector Box
-  Widget _buildMonthSelectorBox() {
-    return InkWell(
-      onTap: () => _selectDate(context),
-      borderRadius: BorderRadius.circular(12.r),
-      child: Container(
-        height: 52.h,
-        padding: EdgeInsets.symmetric(horizontal: 12.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: AppColors.border, width: 1.5),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.calendar_month_outlined,
-              color: AppColors.textSecondary,
-              size: 20.sp,
-            ),
-            SizedBox(width: 8.w),
-            Expanded(
-              child: Text(
-                _formatMonth(selectedDate),
-                style: AppTextStyles.mediumBlackBold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Input Field Helper
-  Widget _buildInputField({
-    required TextEditingController controller,
-    IconData? icon,
-    required String hint,
-    String? suffixText,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: AppTextStyles.mediumBlackBold,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: AppTextStyles.mediumGrey,
-        prefixIcon: icon != null
-            ? Icon(
-                icon,
-                color: AppColors.textSecondary,
-                size: 20.sp,
-              )
-            : null,
-        suffixText: suffixText,
-        suffixStyle: AppTextStyles.mediumBlackBold,
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-        ),
-      ),
-    );
-  }
-
-  // Simple Input Field Helper
-  Widget _buildSimpleInput({
-    required TextEditingController controller,
-    required String hint,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: AppTextStyles.mediumBlackBold,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: AppTextStyles.mediumGrey,
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-        ),
       ),
     );
   }

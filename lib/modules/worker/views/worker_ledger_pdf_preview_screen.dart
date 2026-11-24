@@ -4,51 +4,20 @@ import 'package:get/get.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
+import 'package:smart_contractor_app/core/widgets/app_outlined_button.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
 
-class WorkerLedgerPdfPreviewScreen extends StatefulWidget {
+class WorkerLedgerPdfPreviewScreen extends StatelessWidget {
   const WorkerLedgerPdfPreviewScreen({super.key});
 
-  @override
-  State<WorkerLedgerPdfPreviewScreen> createState() =>
-      _WorkerLedgerPdfPreviewScreenState();
-}
-
-class _WorkerLedgerPdfPreviewScreenState
-    extends State<WorkerLedgerPdfPreviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'PDF প্রিভিউ',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'রহিম মিয়া • কর্মীর হিসাব',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: const AppCustomAppBar(
+        title: 'PDF প্রিভিউ',
+        subtitle: 'রহিম মিয়া • কর্মীর হিসাব',
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 20.h),
@@ -328,37 +297,13 @@ class _WorkerLedgerPdfPreviewScreenState
             Row(
               children: [
                 Expanded(
-                  child: InkWell(
-                    onTap: () {
+                  child: AppOutlinedButton(
+                    onPressed: () {
                       Get.snackbar(
                           'ডাউনলোড', 'কর্মীর হিসাব PDF ফাইল ডিভাইসে সেভ হয়েছে');
                     },
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Container(
-                      height: 48.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border:
-                            Border.all(color: AppColors.primary, width: 1.5),
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.download_rounded,
-                              color: AppColors.primary, size: 18.sp),
-                          SizedBox(width: 6.w),
-                          Text(
-                            'ডাউনলোড',
-                            style: AppTextStyles.custom(
-                              size: 14.sp,
-                              color: AppColors.primary,
-                              weight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    text: 'ডাউনলোড',
+                    icon: Icons.download_rounded,
                   ),
                 ),
                 SizedBox(width: 10.w),

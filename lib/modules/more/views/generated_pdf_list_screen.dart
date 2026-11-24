@@ -5,7 +5,9 @@ import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
 import 'package:smart_contractor_app/core/widgets/app_text_field.dart';
+import 'package:smart_contractor_app/modules/more/controllers/more_controller.dart';
 
 class GeneratedPdfItem {
   final String id;
@@ -25,199 +27,95 @@ class GeneratedPdfItem {
   });
 }
 
-class GeneratedPdfListScreen extends StatefulWidget {
+class GeneratedPdfListScreen extends StatelessWidget {
   const GeneratedPdfListScreen({super.key});
 
   @override
-  State<GeneratedPdfListScreen> createState() => _GeneratedPdfListScreenState();
-}
-
-class _GeneratedPdfListScreenState extends State<GeneratedPdfListScreen> {
-  final TextEditingController searchController = TextEditingController();
-  int selectedFilterIndex = 0;
-
-  final List<String> filterLabels = ['সব', 'মালামাল', 'বিল', 'রসিদ', 'কর্মী'];
-
-  final List<GeneratedPdfItem> pdfItems = const [
-    GeneratedPdfItem(
-      id: '1',
-      title: 'মালামালের তালিকা',
-      subtitle: 'করিমের বাসা • ২৩ অক্টোবর • v2',
-      category: 'মালামাল',
-      badgeColor: AppColors.primary,
-      badgeBgColor: AppColors.primaryLight,
-    ),
-    GeneratedPdfItem(
-      id: '2',
-      title: 'মালামালের তালিকা',
-      subtitle: 'করিমের বাসা • ২২ অক্টোবর • v1',
-      category: 'মালামাল',
-      badgeColor: AppColors.primary,
-      badgeBgColor: AppColors.primaryLight,
-    ),
-    GeneratedPdfItem(
-      id: '3',
-      title: 'ফাইনাল বিল',
-      subtitle: 'করিমের বাসা • ২৩ অক্টোবর',
-      category: 'বিল',
-      badgeColor: Color(0xFF079455),
-      badgeBgColor: Color(0xFFE8F8F0),
-    ),
-    GeneratedPdfItem(
-      id: '4',
-      title: 'টাকা পাওয়ার রসিদ',
-      subtitle: 'করিমের বাসা • ২৩ অক্টোবর',
-      category: 'রসিদ',
-      badgeColor: Color(0xFFE66A00),
-      badgeBgColor: Color(0xFFFFF4E5),
-    ),
-    GeneratedPdfItem(
-      id: '5',
-      title: 'কর্মীর হিসাব',
-      subtitle: 'রহিম মিয়া • অক্টোবর ২০২৬',
-      category: 'কর্মী',
-      badgeColor: Color(0xFF6941C6),
-      badgeBgColor: Color(0xFFF4EBFF),
-    ),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    searchController.addListener(() {
-      setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    searchController.dispose();
-    super.dispose();
-  }
-
-  List<GeneratedPdfItem> get filteredPdfItems {
-    final query = searchController.text.trim().toLowerCase();
-
-    return pdfItems.where((item) {
-      // Category Tab Filter
-      bool matchesTab = true;
-      if (selectedFilterIndex > 0) {
-        matchesTab = item.category == filterLabels[selectedFilterIndex];
-      }
-
-      // Search Query Filter
-      bool matchesSearch = query.isEmpty ||
-          item.title.toLowerCase().contains(query) ||
-          item.subtitle.toLowerCase().contains(query);
-
-      return matchesTab && matchesSearch;
-    }).toList();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final items = filteredPdfItems;
+    Get.put(MoreController());
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'তৈরি করা PDF',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'আগের PDF আবার দেখুন ও পাঠান',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: const AppCustomAppBar(
+        title: 'তৈরি করা PDF',
+        subtitle: 'আগের PDF আবার দেখুন ও পাঠান',
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Search Field
-            _buildSearchBar(),
+      body: GetBuilder<MoreController>(
+        builder: (controller) {
+          final items = controller.filteredPdfItems;
 
-            SizedBox(height: 12.h),
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Search Field
+                _buildSearchBar(controller),
 
-            // 2. Filter Tabs Bar
-            _buildFilterTabs(),
+                SizedBox(height: 12.h),
 
-            SizedBox(height: 12.h),
+                // 2. Filter Tabs Bar
+                _buildFilterTabs(controller),
 
-            // 3. PDF Cards List
-            ...items.map((pdf) => Padding(
-                  padding: EdgeInsets.only(bottom: 8.h),
-                  child: _buildPdfCard(pdf),
-                )),
+                SizedBox(height: 12.h),
 
-            SizedBox(height: 6.h),
-
-            // 4. Info Notice Box
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    color: AppColors.primary,
-                    size: 20.sp,
+                // 3. PDF Cards List
+                ...items.map(
+                  (pdf) => Padding(
+                    padding: EdgeInsets.only(bottom: 8.h),
+                    child: _buildPdfCard(pdf),
                   ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      'প্রতিটি PDF তৈরির সময়কার কপি। তালিকা বদলালে নতুন PDF তৈরি করুন।',
-                      style: AppTextStyles.custom(
-                        size: 12.sp,
+                ),
+
+                SizedBox(height: 6.h),
+
+                // 4. Info Notice Box
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
                         color: AppColors.primary,
+                        size: 20.sp,
                       ),
-                    ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          'প্রতিটি PDF তৈরির সময়কার কপি। তালিকা বদলালে নতুন PDF তৈরি করুন।',
+                          style: AppTextStyles.custom(
+                            size: 12.sp,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   // Search Input Bar Helper
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(MoreController controller) {
     return AppTextField(
-      controller: searchController,
+      controller: controller.pdfSearchController,
       hint: 'কাজ, কর্মী বা PDF খুঁজুন',
       icon: Icons.search_rounded,
     );
   }
 
   // Filter Tabs Bar Helper
-  Widget _buildFilterTabs() {
+  Widget _buildFilterTabs(MoreController controller) {
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
@@ -226,15 +124,11 @@ class _GeneratedPdfListScreenState extends State<GeneratedPdfListScreen> {
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
-        children: List.generate(filterLabels.length, (index) {
-          final isSelected = selectedFilterIndex == index;
+        children: List.generate(controller.filterLabels.length, (index) {
+          final isSelected = controller.selectedFilterIndex == index;
           return Expanded(
             child: InkWell(
-              onTap: () {
-                setState(() {
-                  selectedFilterIndex = index;
-                });
-              },
+              onTap: () => controller.setFilterIndex(index),
               borderRadius: BorderRadius.circular(9.r),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
@@ -245,7 +139,7 @@ class _GeneratedPdfListScreenState extends State<GeneratedPdfListScreen> {
                   borderRadius: BorderRadius.circular(9.r),
                 ),
                 child: Text(
-                  filterLabels[index],
+                  controller.filterLabels[index],
                   style: AppTextStyles.custom(
                     size: 12.sp,
                     color: isSelected ? Colors.white : AppColors.textSecondary,
@@ -303,10 +197,7 @@ class _GeneratedPdfListScreenState extends State<GeneratedPdfListScreen> {
                   ),
                 ),
                 SizedBox(height: 2.h),
-                Text(
-                  pdf.subtitle,
-                  style: AppTextStyles.smallGrey,
-                ),
+                Text(pdf.subtitle, style: AppTextStyles.smallGrey),
               ],
             ),
           ),

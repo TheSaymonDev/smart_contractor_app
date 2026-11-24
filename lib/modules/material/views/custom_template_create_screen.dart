@@ -5,24 +5,15 @@ import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
 import 'package:smart_contractor_app/core/widgets/app_text_field.dart';
+import 'package:smart_contractor_app/modules/material/controllers/material_wizard_controller.dart';
 
-class CustomTemplateCreateScreen extends StatefulWidget {
+class CustomTemplateCreateScreen extends StatelessWidget {
   const CustomTemplateCreateScreen({super.key});
 
-  @override
-  State<CustomTemplateCreateScreen> createState() =>
-      _CustomTemplateCreateScreenState();
-}
-
-class _CustomTemplateCreateScreenState
-    extends State<CustomTemplateCreateScreen> {
-  final TextEditingController templateNameController =
-      TextEditingController(text: '২ বাথরুমের পানির লাইন');
-  String selectedWorkType = 'পাইপ ফিটিংস';
-
-  final List<String> workTypes = [
+  final List<String> workTypes = const [
     'পাইপ ফিটিংস',
     'ইলেক্ট্রিক্যাল',
     'প্লাম্বিং',
@@ -32,225 +23,205 @@ class _CustomTemplateCreateScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (!Get.isRegistered<MaterialWizardController>()) {
+      Get.put(MaterialWizardController());
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'নিজের টেমপ্লেট',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'তালিকাটি বারবার ব্যবহার করুন',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: const AppCustomAppBar(
+        title: 'নিজের টেমপ্লেট',
+        subtitle: 'তালিকাটি বারবার ব্যবহার করুন',
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Template Name
-            AppTextField(
-              label: 'টেমপ্লেটের নাম',
-              controller: templateNameController,
-              icon: Icons.layers_outlined,
-              hint: 'যেমন: ২ বাথরুমের পানির লাইন',
-            ),
+      body: GetBuilder<MaterialWizardController>(
+        builder: (controller) {
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Template Name
+                AppTextField(
+                  label: 'টেমপ্লেটের নাম',
+                  controller: controller.customTemplateNameController,
+                  icon: Icons.layers_outlined,
+                  hint: 'যেমন: ২ বাথরুমের পানির লাইন',
+                ),
 
-            SizedBox(height: 14.h),
+                SizedBox(height: 14.h),
 
-            // 2. Work Type Dropdown
-            Text('কাজের ধরন', style: AppTextStyles.mediumBlackBold),
-            SizedBox(height: 6.h),
-            InkWell(
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (context) {
-                    return Padding(
-                      padding: EdgeInsets.all(16.w),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: workTypes.map((type) {
-                          return ListTile(
-                            title:
-                                Text(type, style: AppTextStyles.mediumBlack),
-                            onTap: () {
-                              setState(() {
-                                selectedWorkType = type;
-                              });
-                              Get.back();
-                            },
-                          );
-                        }).toList(),
-                      ),
+                // 2. Work Type Dropdown
+                Text('কাজের ধরন', style: AppTextStyles.mediumBlackBold),
+                SizedBox(height: 6.h),
+                InkWell(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      builder: (context) {
+                        return Padding(
+                          padding: EdgeInsets.all(16.w),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: workTypes.map((type) {
+                              return ListTile(
+                                title: Text(type, style: AppTextStyles.mediumBlack),
+                                onTap: () {
+                                  controller.setCustomWorkType(type);
+                                  Get.back();
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        );
+                      },
                     );
                   },
-                );
-              },
-              borderRadius: BorderRadius.circular(12.r),
-              child: Container(
-                height: 52.h,
-                padding: EdgeInsets.symmetric(horizontal: 12.w),
-                decoration: BoxDecoration(
-                  color: Colors.white,
                   borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: AppColors.border, width: 1.5),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: AppColors.textSecondary,
-                      size: 22.sp,
+                  child: Container(
+                    height: 52.h,
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: AppColors.border, width: 1.5),
                     ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text(
-                        selectedWorkType,
-                        style: AppTextStyles.mediumBlackBold,
-                      ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.textSecondary,
+                          size: 22.sp,
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            controller.customWorkType,
+                            style: AppTextStyles.mediumBlackBold,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ),
-
-            SizedBox(height: 16.h),
-
-            // 3. Template Items List
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('টেমপ্লেটের মালামাল',
-                    style: AppTextStyles.mediumBlackBold),
-                Text(
-                  '৮টি',
-                  style: AppTextStyles.custom(
-                    size: 13.sp,
-                    color: AppColors.primary,
-                    weight: FontWeight.w700,
                   ),
                 ),
-              ],
-            ),
 
-            SizedBox(height: 8.h),
+                SizedBox(height: 16.h),
 
-            // Item Card 1
-            _buildTemplateItemCard('1', 'PPR পাইপ', '২০ মিমি • ব্র্যান্ড ইচ্ছা হলে',
-                '১০০', 'ফুট', 'দাম দিন'),
-            SizedBox(height: 8.h),
-
-            // Item Card 2
-            _buildTemplateItemCard('2', 'এলবো', '২০ মিমি', '১০', 'টি', 'দাম দিন'),
-
-            SizedBox(height: 12.h),
-
-            // Add Material Item Button
-            InkWell(
-              onTap: () {
-                Get.toNamed(AppRoutes.materialItemAddEditScreen);
-              },
-              borderRadius: BorderRadius.circular(12.r),
-              child: Container(
-                height: 48.h,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: AppColors.border, width: 1.5),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                // 3. Template Items List
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(Icons.add, color: AppColors.primary, size: 20.sp),
-                    SizedBox(width: 6.w),
+                    Text('টেমপ্লেটের মালামাল',
+                        style: AppTextStyles.mediumBlackBold),
                     Text(
-                      'মালামাল যোগ করুন',
+                      '৮টি',
                       style: AppTextStyles.custom(
-                        size: 14.sp,
+                        size: 13.sp,
                         color: AppColors.primary,
                         weight: FontWeight.w700,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
 
-            SizedBox(height: 14.h),
+                SizedBox(height: 8.h),
 
-            // Info Notice Box
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    color: AppColors.primary,
-                    size: 20.sp,
-                  ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      'নতুন টেমপ্লেট আলাদা সেভ হবে। অন্য কাজের তালিকা বদলাবে না।',
-                      style: AppTextStyles.custom(
-                        size: 12.sp,
-                        color: AppColors.primary,
-                      ),
+                // Item Card 1
+                _buildTemplateItemCard('1', 'PPR পাইপ',
+                    '২০ মিমি • ব্র্যান্ড ইচ্ছা হলে', '১০০', 'ফুট', 'দাম দিন'),
+                SizedBox(height: 8.h),
+
+                // Item Card 2
+                _buildTemplateItemCard(
+                    '2', 'এলবো', '২০ মিমি', '১০', 'টি', 'দাম দিন'),
+
+                SizedBox(height: 12.h),
+
+                // Add Material Item Button
+                InkWell(
+                  onTap: () {
+                    Get.toNamed(AppRoutes.materialItemAddEditScreen);
+                  },
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: Container(
+                    height: 48.h,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: AppColors.border, width: 1.5),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add, color: AppColors.primary, size: 20.sp),
+                        SizedBox(width: 6.w),
+                        Text(
+                          'মালামাল যোগ করুন',
+                          style: AppTextStyles.custom(
+                            size: 14.sp,
+                            color: AppColors.primary,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            SizedBox(height: 24.h),
+                SizedBox(height: 14.h),
 
-            // Bottom Action Button
-            AppPrimaryButton(
-              onPressed: () {
-                Get.snackbar(
-                  'টেমপ্লেট সংরক্ষিত',
-                  'নিজের টেমপ্লেট সফলভাবে সেভ করা হয়েছে',
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: AppColors.primary,
-                  colorText: Colors.white,
-                );
-                Future.delayed(const Duration(milliseconds: 600), () {
-                  Get.back();
-                });
-              },
-              text: 'টেমপ্লেট সেভ করুন',
-              icon: Icons.check_rounded,
+                // Info Notice Box
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: AppColors.primary,
+                        size: 20.sp,
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          'নতুন টেমপ্লেট আলাদা সেভ হবে। অন্য কাজের তালিকা বদলাবে না।',
+                          style: AppTextStyles.custom(
+                            size: 12.sp,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 24.h),
+
+                // Bottom Action Button
+                AppPrimaryButton(
+                  onPressed: () {
+                    Get.snackbar(
+                      'টেমপ্লেট সংরক্ষিত',
+                      'নিজের টেমপ্লেট সফলভাবে সেভ করা হয়েছে',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: AppColors.primary,
+                      colorText: Colors.white,
+                    );
+                    Future.delayed(const Duration(milliseconds: 600), () {
+                      Get.back();
+                    });
+                  },
+                  text: 'টেমপ্লেট সেভ করুন',
+                  icon: Icons.check_rounded,
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -332,10 +303,11 @@ class _CustomTemplateCreateScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style:
-                  AppTextStyles.custom(size: 10.sp, color: AppColors.textSecondary)),
+              style: AppTextStyles.custom(
+                  size: 10.sp, color: AppColors.textSecondary)),
           SizedBox(height: 2.h),
-          Text(value, style: AppTextStyles.custom(size: 12.sp, weight: FontWeight.w700)),
+          Text(value,
+              style: AppTextStyles.custom(size: 12.sp, weight: FontWeight.w700)),
         ],
       ),
     );

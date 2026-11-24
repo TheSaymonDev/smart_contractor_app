@@ -5,6 +5,7 @@ import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_tab_header.dart';
 
 class MoreMenuItemData {
   final IconData icon;
@@ -47,7 +48,7 @@ class MoreScreen extends StatelessWidget {
         title: 'মালামালের টেমপ্লেট',
         subtitle: 'প্রস্তুত তালিকা ও নিজের টেমপ্লেট',
         onTap: () {
-          Get.toNamed(AppRoutes.materialTemplateCategoriesScreen);
+          Get.toNamed(AppRoutes.materialTemplateSelectScreen);
         },
       ),
       MoreMenuItemData(
@@ -99,7 +100,11 @@ class MoreScreen extends StatelessWidget {
         child: Column(
           children: [
             // Top Header Bar
-            _buildHeader(),
+            const AppTabHeader(
+              title: 'আরও',
+              subtitle: 'আপনার ব্যবসার সবকিছু',
+              icon: Icons.apartment,
+            ),
 
             SizedBox(height: 14.h),
 
@@ -118,46 +123,6 @@ class MoreScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  // Header Bar Helper
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        Container(
-          width: 42.w,
-          height: 42.w,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Icon(
-            Icons.apartment,
-            color: Colors.white,
-            size: 24.sp,
-          ),
-        ),
-        SizedBox(width: 12.w),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'আরও',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'আপনার ব্যবসার সবকিছু',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
-      ],
     );
   }
 

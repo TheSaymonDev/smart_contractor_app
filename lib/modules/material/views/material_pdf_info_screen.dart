@@ -5,265 +5,322 @@ import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
 import 'package:smart_contractor_app/core/widgets/app_text_field.dart';
+import 'package:smart_contractor_app/modules/material/controllers/material_wizard_controller.dart';
 import 'package:smart_contractor_app/modules/material/widgets/material_wizard_stepper.dart';
 
-class MaterialPdfInfoScreen extends StatefulWidget {
+class MaterialPdfInfoScreen extends StatelessWidget {
   const MaterialPdfInfoScreen({super.key});
 
   @override
-  State<MaterialPdfInfoScreen> createState() => _MaterialPdfInfoScreenState();
-}
-
-class _MaterialPdfInfoScreenState extends State<MaterialPdfInfoScreen> {
-  bool showPrices = false;
-  bool showBrandAndNotes = true;
-
-  final TextEditingController clientNoteController =
-      TextEditingController(text: 'কেনার আগে মাপ মিলিয়ে নিন');
-
-  @override
-  void dispose() {
-    clientNoteController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    if (!Get.isRegistered<MaterialWizardController>()) {
+      Get.put(MaterialWizardController());
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'PDF-এর তথ্য',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'পাঠানোর আগে একবার দেখে নিন',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: const AppCustomAppBar(
+        title: 'PDF-এর তথ্য',
+        subtitle: 'পাঠানোর আগে একবার দেখে নিন',
       ),
-      body: Column(
-        children: [
-          // Step 3 Stepper
-          const MaterialWizardStepper(currentStep: 3),
+      body: GetBuilder<MaterialWizardController>(
+        builder: (controller) {
+          return Column(
+            children: [
+              // Step 3 Stepper
+              const MaterialWizardStepper(currentStep: 3),
 
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 20.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Contractor Info Card
-                  AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 20.h),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. Contractor Info Card
+                      AppCard(
+                        padding: EdgeInsets.all(12.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('ঠিকাদারের তথ্য',
-                                style: AppTextStyles.mediumBlackBold),
-                            InkWell(
-                              onTap: () {
-                                Get.snackbar('এডিট', 'ঠিকাদারের তথ্য সম্পাদনা');
-                              },
-                              child: Text(
-                                'এডিট',
-                                style: AppTextStyles.custom(
-                                  size: 13.sp,
-                                  color: AppColors.primary,
-                                  weight: FontWeight.w700,
-                                ),
+                            // Section Header Bar
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10.w,
+                                vertical: 8.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLight,
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'ঠিকাদারের তথ্য',
+                                    style: AppTextStyles.custom(
+                                      size: 14.sp,
+                                      color: AppColors.primary,
+                                      weight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  InkWell(
+                                    onTap: () {
+                                      Get.toNamed(
+                                        AppRoutes.businessSetupScreen,
+                                      );
+                                    },
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.edit_outlined,
+                                          color: AppColors.primary,
+                                          size: 14.sp,
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          'এডিট',
+                                          style: AppTextStyles.custom(
+                                            size: 12.sp,
+                                            color: AppColors.primary,
+                                            weight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 10.h),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 4.w),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    controller.contractorName,
+                                    style: AppTextStyles.custom(
+                                      size: 15.sp,
+                                      color: AppColors.textPrimary,
+                                      weight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  SizedBox(height: 3.h),
+                                  Text(
+                                    'মোবাইল: ${controller.contractorPhone} • ঠিকানা: ${controller.contractorAddress}',
+                                    style: AppTextStyles.smallGrey,
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 6.h),
-                        Text(
-                          'রহমান কন্ট্রাক্টর সার্ভিস',
-                          style: AppTextStyles.custom(
-                            size: 15.sp,
-                            color: AppColors.textPrimary,
-                            weight: FontWeight.w700,
-                          ),
-                        ),
-                        SizedBox(height: 2.h),
-                        Text('রহমান আলী • 01712-345678',
-                            style: AppTextStyles.smallGrey),
-                        SizedBox(height: 2.h),
-                        Text('মিরপুর-১০, ঢাকা',
-                            style: AppTextStyles.smallGrey),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  // Client Info Card
-                  AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('ক্লায়েন্টের তথ্য',
-                                style: AppTextStyles.mediumBlackBold),
-                            InkWell(
-                              onTap: () {
-                                Get.snackbar('এডিট', 'ক্লায়েন্টের তথ্য সম্পাদনা');
-                              },
-                              child: Text(
-                                'এডিট',
-                                style: AppTextStyles.custom(
-                                  size: 13.sp,
-                                  color: AppColors.primary,
-                                  weight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 6.h),
-                        Text(
-                          'আব্দুল করিম',
-                          style: AppTextStyles.custom(
-                            size: 15.sp,
-                            color: AppColors.textPrimary,
-                            weight: FontWeight.w700,
-                          ),
-                        ),
-                        SizedBox(height: 2.h),
-                        Text('01812-345678 • মিরপুর-১০, ঢাকা',
-                            style: AppTextStyles.smallGrey),
-                        SizedBox(height: 2.h),
-                        Text('কাজ: করিমের বাসা • ২য় তলা',
-                            style: AppTextStyles.smallGrey),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(height: 16.h),
-
-                  // Section Title: PDF-এ কী দেখাবেন?
-                  Text('PDF-এ কী দেখাবেন?',
-                      style: AppTextStyles.mediumBlackBold),
-                  SizedBox(height: 8.h),
-
-                  // Toggle Checkbox 1: Show Prices
-                  _buildToggleCheckboxRow(
-                    title: 'মালামালের দাম দেখান',
-                    subtitle: 'দাম না দিলেও PDF হবে',
-                    value: showPrices,
-                    onChanged: (val) {
-                      setState(() {
-                        showPrices = val ?? false;
-                      });
-                    },
-                  ),
-
-                  SizedBox(height: 8.h),
-
-                  // Toggle Checkbox 2: Show Brand and Notes
-                  _buildToggleCheckboxRow(
-                    title: 'ব্র্যান্ড ও নোট দেখান',
-                    subtitle: 'যেসব তথ্য লিখেছেন সেগুলো থাকবে',
-                    value: showBrandAndNotes,
-                    onChanged: (val) {
-                      setState(() {
-                        showBrandAndNotes = val ?? true;
-                      });
-                    },
-                  ),
-
-                  SizedBox(height: 14.h),
-
-                  // Note for Client
-                  AppTextField(
-                    labelWidget: RichText(
-                      text: TextSpan(
-                        text: 'ক্লায়েন্টের জন্য নোট ',
-                        style: AppTextStyles.mediumBlackBold,
-                        children: [
-                          TextSpan(
-                              text: '(ইচ্ছা হলে)', style: AppTextStyles.smallGrey),
-                        ],
                       ),
-                    ),
-                    controller: clientNoteController,
-                    hint: 'যেমন: কেনার আগে মাপ মিলিয়ে নিন',
-                  ),
 
-                  SizedBox(height: 14.h),
+                      SizedBox(height: 12.h),
 
-                  // Info Notice Box
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline_rounded,
-                          color: AppColors.primary,
-                          size: 20.sp,
-                        ),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: Text(
-                            'এক বা একাধিক মালামালের দাম না থাকলে পূর্ণ মোট দেখাবে না।',
-                            style: AppTextStyles.custom(
-                              size: 12.sp,
-                              color: AppColors.primary,
+                      // 2. Client Info Card
+                      AppCard(
+                        padding: EdgeInsets.all(12.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Section Header Bar
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10.w,
+                                vertical: 8.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLight,
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'ক্লায়েন্টের তথ্য',
+                                    style: AppTextStyles.custom(
+                                      size: 14.sp,
+                                      color: AppColors.primary,
+                                      weight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  InkWell(
+                                    onTap: () {
+                                      Get.toNamed(
+                                        AppRoutes.clientManagementScreen,
+                                      );
+                                    },
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.edit_outlined,
+                                          color: AppColors.primary,
+                                          size: 14.sp,
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          'এডিট',
+                                          style: AppTextStyles.custom(
+                                            size: 12.sp,
+                                            color: AppColors.primary,
+                                            weight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                            SizedBox(height: 10.h),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 4.w),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    controller.clientName,
+                                    style: AppTextStyles.custom(
+                                      size: 15.sp,
+                                      color: AppColors.textPrimary,
+                                      weight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  SizedBox(height: 3.h),
+                                  Text(
+                                    'মোবাইল: ${controller.clientPhone} • ঠিকানা: ${controller.clientAddress}',
+                                    style: AppTextStyles.smallGrey,
+                                  ),
+                                  SizedBox(height: 3.h),
+                                  Text(
+                                    'কাজের নাম: ${controller.jobName}',
+                                    style: AppTextStyles.custom(
+                                      size: 12.sp,
+                                      color: AppColors.primary,
+                                      weight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      SizedBox(height: 16.h),
+
+                      // 3. Section Title: PDF-এ কী দেখাবেন?
+                      Text(
+                        'PDF-এ কী দেখাবেন?',
+                        style: AppTextStyles.custom(
+                          size: 15.sp,
+                          color: AppColors.textPrimary,
+                          weight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+
+                      // Toggle Checkbox 1: Show Prices
+                      _buildToggleCheckboxRow(
+                        title: 'মালামালের দাম দেখান',
+                        subtitle: 'দাম না দিলেও PDF হবে',
+                        value: controller.showPricesInPdf,
+                        onChanged: (val) {
+                          controller.setShowPricesInPdf(val ?? false);
+                        },
+                      ),
+
+                      SizedBox(height: 8.h),
+
+                      // Toggle Checkbox 2: Show Brand and Notes
+                      _buildToggleCheckboxRow(
+                        title: 'ব্র্যান্ড ও নোট দেখান',
+                        subtitle: 'যেসব তথ্য লিখেছেন সেগুলো থাকবে',
+                        value: controller.showBrandsAndNotesInPdf,
+                        onChanged: (val) {
+                          controller.setShowBrandsAndNotesInPdf(val ?? true);
+                        },
+                      ),
+
+                      SizedBox(height: 14.h),
+
+                      // Note for Client
+                      AppTextField(
+                        labelWidget: RichText(
+                          text: TextSpan(
+                            text: 'ক্লায়েন্টের জন্য নোট ',
+                            style: AppTextStyles.mediumBlackBold,
+                            children: [
+                              TextSpan(
+                                text: '(ইচ্ছা হলে)',
+                                style: AppTextStyles.smallGrey,
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                        controller: controller.clientNoteController,
+                        hint: 'যেমন: কেনার আগে মাপ মিলিয়ে নিন',
+                      ),
 
-                  SizedBox(height: 24.h),
+                      SizedBox(height: 14.h),
 
-                  // Bottom Action Button -> Step 4
-                  AppPrimaryButton(
-                    onPressed: () {
-                      Get.toNamed(
-                        AppRoutes.materialPdfPreviewScreen,
-                        arguments: showPrices,
-                      );
-                    },
-                    text: 'PDF প্রিভিউ দেখুন',
-                    icon: Icons.description_outlined,
+                      // Info Notice Box
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(12.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight,
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline_rounded,
+                              color: AppColors.primary,
+                              size: 20.sp,
+                            ),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                'এক বা একাধিক মালামালের দাম না থাকলে পূর্ণ মোট দেখাবে না।',
+                                style: AppTextStyles.custom(
+                                  size: 12.sp,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      SizedBox(height: 24.h),
+
+                      // Bottom Action Button -> Step 4
+                      AppPrimaryButton(
+                        onPressed: () {
+                          controller.setStep(4);
+                          Get.toNamed(
+                            AppRoutes.materialPdfPreviewScreen,
+                            arguments: controller.showPricesInPdf,
+                          );
+                        },
+                        text: 'PDF প্রিভিউ দেখুন',
+                        icon: Icons.description_outlined,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }

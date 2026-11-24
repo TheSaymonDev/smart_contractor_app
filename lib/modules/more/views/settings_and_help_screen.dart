@@ -5,6 +5,7 @@ import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
 
 class SettingsAndHelpScreen extends StatelessWidget {
   const SettingsAndHelpScreen({super.key});
@@ -13,35 +14,9 @@ class SettingsAndHelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'সেটিংস ও সাহায্য',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'সহজে অ্যাপ ব্যবহার করুন',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: const AppCustomAppBar(
+        title: 'সেটিংস ও সাহায্য',
+        subtitle: 'সহজে অ্যাপ ব্যবহার করুন',
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),

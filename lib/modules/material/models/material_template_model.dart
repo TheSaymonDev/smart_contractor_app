@@ -6,6 +6,7 @@ class MaterialTemplateModel {
   final String englishTitle;
   final String category;
   final String description;
+  final String? customItemCountText;
   final List<MaterialItemModel> items;
 
   const MaterialTemplateModel({
@@ -14,6 +15,10 @@ class MaterialTemplateModel {
     required this.englishTitle,
     required this.category,
     required this.description,
+    String? itemCountText,
     required this.items,
-  });
+  }) : customItemCountText = itemCountText;
+
+  String get itemCountText =>
+      customItemCountText ?? '${items.length}টি মালামাল';
 }

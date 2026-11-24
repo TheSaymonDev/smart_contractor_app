@@ -4,64 +4,21 @@ import 'package:get/get.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
 import 'package:smart_contractor_app/core/widgets/app_text_field.dart';
+import 'package:smart_contractor_app/modules/job/controllers/job_controller.dart';
 
-class WageAndExpenseScreen extends StatefulWidget {
+class WageAndExpenseScreen extends StatelessWidget {
   const WageAndExpenseScreen({super.key});
 
-  @override
-  State<WageAndExpenseScreen> createState() => _WageAndExpenseScreenState();
-}
-
-class _WageAndExpenseScreenState extends State<WageAndExpenseScreen> {
-  int selectedTabIndex = 0;
-
-  final List<String> tabLabels = ['কাজের মজুরি', 'বাড়তি বিল', 'অন্য খরচ'];
-
-  // Form Controllers
-  final TextEditingController wageController =
-      TextEditingController(text: '26000');
-  final TextEditingController wageNoteController =
-      TextEditingController(text: 'ক্লায়েন্টের সাথে ঠিক করা মজুরি');
-
-  final TextEditingController extraBillTitleController =
-      TextEditingController();
-  final TextEditingController extraBillAmountController =
-      TextEditingController();
-
-  final TextEditingController otherExpenseTitleController =
-      TextEditingController();
-  final TextEditingController otherExpenseAmountController =
-      TextEditingController();
-
-  DateTime selectedDate = DateTime(2026, 10, 22);
-
-  @override
-  void initState() {
-    super.initState();
-    final args = Get.arguments;
-    if (args is int && args >= 0 && args < tabLabels.length) {
-      selectedTabIndex = args;
-    }
-  }
-
-  @override
-  void dispose() {
-    wageController.dispose();
-    wageNoteController.dispose();
-    extraBillTitleController.dispose();
-    extraBillAmountController.dispose();
-    otherExpenseTitleController.dispose();
-    otherExpenseAmountController.dispose();
-    super.dispose();
-  }
+  final List<String> tabLabels = const ['কাজের মজুরি', 'বাড়তি বিল', 'অন্য খরচ'];
 
   // Date Picker
-  Future<void> _selectDate(BuildContext context) async {
+  Future<void> _selectDate(BuildContext context, JobController controller) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate,
+      initialDate: controller.expenseDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
       builder: (context, child) {
@@ -79,9 +36,7 @@ class _WageAndExpenseScreenState extends State<WageAndExpenseScreen> {
     );
 
     if (picked != null) {
-      setState(() {
-        selectedDate = picked;
-      });
+      controller.setExpenseDate(picked);
     }
   }
 
@@ -105,81 +60,71 @@ class _WageAndExpenseScreenState extends State<WageAndExpenseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.isRegistered<JobController>()
+        ? Get.find<JobController>()
+        : Get.put(JobController());
+
+    final args = Get.arguments;
+    if (args is int && args >= 0 && args < tabLabels.length) {
+      controller.wageExpenseTabIndex = args;
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'মজুরি ও খরচ',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'করিমের বাসা',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: const AppCustomAppBar(
+        title: 'মজুরি ও খরচ',
+        subtitle: 'করিমের বাসা',
       ),
-      body: SingleChildScrollView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Segmented Header Tabs
-            _buildHeaderTabs(),
+      body: GetBuilder<JobController>(
+        builder: (controller) {
+          return SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Segmented Header Tabs
+                _buildHeaderTabs(controller),
 
-            SizedBox(height: 16.h),
+                SizedBox(height: 16.h),
 
-            // 2. Dynamic Content View by Tab
-            if (selectedTabIndex == 0) _buildWageTabContent(),
-            if (selectedTabIndex == 1) _buildExtraBillTabContent(),
-            if (selectedTabIndex == 2) _buildOtherExpenseTabContent(),
+                // 2. Dynamic Content View by Tab
+                if (controller.wageExpenseTabIndex == 0)
+                  _buildWageTabContent(controller),
+                if (controller.wageExpenseTabIndex == 1)
+                  _buildExtraBillTabContent(context, controller),
+                if (controller.wageExpenseTabIndex == 2)
+                  _buildOtherExpenseTabContent(context, controller),
 
-            SizedBox(height: 24.h),
+                SizedBox(height: 24.h),
 
-            // 3. Bottom Save Button
-            AppPrimaryButton(
-              onPressed: () {
-                Get.snackbar(
-                  'সংরক্ষিত হয়েছে',
-                  'মজুরি ও খরচের তথ্য সফলভাবে সেভ করা হয়েছে',
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: AppColors.primary,
-                  colorText: Colors.white,
-                );
-                Future.delayed(const Duration(milliseconds: 600), () {
-                  Get.back();
-                });
-              },
-              text: 'সেভ করুন',
-              icon: Icons.check_rounded,
+                // 3. Bottom Save Button
+                AppPrimaryButton(
+                  onPressed: () {
+                    Get.snackbar(
+                      'সংরক্ষিত হয়েছে',
+                      'মজুরি ও খরচের তথ্য সফলভাবে সেভ করা হয়েছে',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: AppColors.primary,
+                      colorText: Colors.white,
+                    );
+                    Future.delayed(const Duration(milliseconds: 600), () {
+                      Get.back();
+                    });
+                  },
+                  text: 'সেভ করুন',
+                  icon: Icons.check_rounded,
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   // Segmented Header Tabs Control
-  Widget _buildHeaderTabs() {
+  Widget _buildHeaderTabs(JobController controller) {
     return Container(
       height: 48.h,
       padding: EdgeInsets.all(3.w),
@@ -189,14 +134,10 @@ class _WageAndExpenseScreenState extends State<WageAndExpenseScreen> {
       ),
       child: Row(
         children: List.generate(tabLabels.length, (index) {
-          final isSelected = selectedTabIndex == index;
+          final isSelected = controller.wageExpenseTabIndex == index;
           return Expanded(
             child: InkWell(
-              onTap: () {
-                setState(() {
-                  selectedTabIndex = index;
-                });
-              },
+              onTap: () => controller.setWageExpenseTabIndex(index),
               borderRadius: BorderRadius.circular(9.r),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
@@ -221,17 +162,15 @@ class _WageAndExpenseScreenState extends State<WageAndExpenseScreen> {
     );
   }
 
-  // ==========================================
   // TAB 0: কাজের মজুরি (Wage Tab)
-  // ==========================================
-  Widget _buildWageTabContent() {
+  Widget _buildWageTabContent(JobController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 1. Total Wage Field
         AppTextField(
           label: 'ঠিক করা মোট মজুরি',
-          controller: wageController,
+          controller: controller.wageController,
           icon: Icons.payments_outlined,
           hint: 'পরিমাণ লিখুন',
           suffixText: 'টাকা',
@@ -254,7 +193,7 @@ class _WageAndExpenseScreenState extends State<WageAndExpenseScreen> {
               ],
             ),
           ),
-          controller: wageNoteController,
+          controller: controller.wageNoteController,
           hint: 'ক্লায়েন্টের সাথে ঠিক করা মজুরি',
         ),
 
@@ -392,74 +331,34 @@ class _WageAndExpenseScreenState extends State<WageAndExpenseScreen> {
     );
   }
 
-  // ==========================================
   // TAB 1: বাড়তি বিল (Extra Bill Tab)
-  // ==========================================
-  Widget _buildExtraBillTabContent() {
+  Widget _buildExtraBillTabContent(
+      BuildContext context, JobController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('বাড়তি কাজের বিবরণ', style: AppTextStyles.mediumBlackBold),
-        SizedBox(height: 6.h),
-        TextFormField(
-          controller: extraBillTitleController,
-          style: AppTextStyles.mediumBlackBold,
-          decoration: InputDecoration(
-            hintText: 'যেমন: পুরোনো লাইন খুলে ফেলা',
-            hintStyle: AppTextStyles.mediumGrey,
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding:
-                EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-          ),
+        AppTextField(
+          label: 'বাড়তি কাজের বিবরণ',
+          controller: controller.extraBillTitleController,
+          hint: 'যেমন: পুরোনো লাইন খুলে ফেলা',
         ),
 
         SizedBox(height: 14.h),
 
-        Text('বিল পরিমাণ (৳)', style: AppTextStyles.mediumBlackBold),
-        SizedBox(height: 6.h),
-        TextFormField(
-          controller: extraBillAmountController,
+        AppTextField(
+          label: 'বিল পরিমাণ (৳)',
+          controller: controller.extraBillAmountController,
+          icon: Icons.payments_outlined,
+          hint: 'যেমন: ২০০০',
+          suffixText: 'টাকা',
           keyboardType: TextInputType.number,
-          style: AppTextStyles.mediumBlackBold,
-          decoration: InputDecoration(
-            hintText: 'যেমন: ২০০০',
-            hintStyle: AppTextStyles.mediumGrey,
-            prefixIcon: Icon(
-              Icons.payments_outlined,
-              color: AppColors.textSecondary,
-              size: 20.sp,
-            ),
-            suffixText: 'টাকা',
-            suffixStyle: AppTextStyles.mediumBlackBold,
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding:
-                EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-          ),
         ),
 
         SizedBox(height: 14.h),
 
         Text('তারিখ', style: AppTextStyles.mediumBlackBold),
         SizedBox(height: 6.h),
-        _buildDateSelector(),
+        _buildDateSelector(context, controller),
 
         SizedBox(height: 14.h),
 
@@ -494,74 +393,34 @@ class _WageAndExpenseScreenState extends State<WageAndExpenseScreen> {
     );
   }
 
-  // ==========================================
   // TAB 2: অন্য খরচ (Other Expense Tab)
-  // ==========================================
-  Widget _buildOtherExpenseTabContent() {
+  Widget _buildOtherExpenseTabContent(
+      BuildContext context, JobController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('খরচের বিবরণ', style: AppTextStyles.mediumBlackBold),
-        SizedBox(height: 6.h),
-        TextFormField(
-          controller: otherExpenseTitleController,
-          style: AppTextStyles.mediumBlackBold,
-          decoration: InputDecoration(
-            hintText: 'যেমন: যাতায়াত ও ছোটখাটো খরচ',
-            hintStyle: AppTextStyles.mediumGrey,
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding:
-                EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-          ),
+        AppTextField(
+          label: 'খরচের বিবরণ',
+          controller: controller.otherExpenseTitleController,
+          hint: 'যেমন: যাতায়াত ও ছোটখাটো খরচ',
         ),
 
         SizedBox(height: 14.h),
 
-        Text('খরচের পরিমাণ (৳)', style: AppTextStyles.mediumBlackBold),
-        SizedBox(height: 6.h),
-        TextFormField(
-          controller: otherExpenseAmountController,
+        AppTextField(
+          label: 'খরচের পরিমাণ (৳)',
+          controller: controller.otherExpenseAmountController,
+          icon: Icons.payments_outlined,
+          hint: 'যেমন: ১৫০০',
+          suffixText: 'টাকা',
           keyboardType: TextInputType.number,
-          style: AppTextStyles.mediumBlackBold,
-          decoration: InputDecoration(
-            hintText: 'যেমন: ১৫০০',
-            hintStyle: AppTextStyles.mediumGrey,
-            prefixIcon: Icon(
-              Icons.payments_outlined,
-              color: AppColors.textSecondary,
-              size: 20.sp,
-            ),
-            suffixText: 'টাকা',
-            suffixStyle: AppTextStyles.mediumBlackBold,
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding:
-                EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-          ),
         ),
 
         SizedBox(height: 14.h),
 
         Text('তারিখ', style: AppTextStyles.mediumBlackBold),
         SizedBox(height: 6.h),
-        _buildDateSelector(),
+        _buildDateSelector(context, controller),
 
         SizedBox(height: 14.h),
 
@@ -597,9 +456,9 @@ class _WageAndExpenseScreenState extends State<WageAndExpenseScreen> {
   }
 
   // Date Selector Box
-  Widget _buildDateSelector() {
+  Widget _buildDateSelector(BuildContext context, JobController controller) {
     return InkWell(
-      onTap: () => _selectDate(context),
+      onTap: () => _selectDate(context, controller),
       borderRadius: BorderRadius.circular(12.r),
       child: Container(
         height: 52.h,
@@ -619,7 +478,7 @@ class _WageAndExpenseScreenState extends State<WageAndExpenseScreen> {
             SizedBox(width: 8.w),
             Expanded(
               child: Text(
-                _formatDate(selectedDate),
+                _formatDate(controller.expenseDate),
                 style: AppTextStyles.mediumBlackBold,
               ),
             ),

@@ -29,6 +29,7 @@ class MainScreen extends StatelessWidget {
           : Get.put(MainController()),
       builder: (controller) {
         return Scaffold(
+          backgroundColor: AppColors.background,
           body: IndexedStack(
             index: controller.currentIndex,
             children: screens,
@@ -86,7 +87,7 @@ class MainScreen extends StatelessWidget {
             onTap: () => controller.changeTab(index),
             borderRadius: BorderRadius.circular(14.r),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
+              duration: const Duration(milliseconds: 360),
               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.primaryLight : Colors.transparent,

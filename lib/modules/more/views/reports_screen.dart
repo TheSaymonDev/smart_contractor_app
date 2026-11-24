@@ -5,26 +5,17 @@ import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
+import 'package:smart_contractor_app/modules/more/controllers/more_controller.dart';
 
-class ReportsScreen extends StatefulWidget {
+class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
 
-  @override
-  State<ReportsScreen> createState() => _ReportsScreenState();
-}
-
-class _ReportsScreenState extends State<ReportsScreen> {
-  DateTime selectedDate = DateTime(2026, 10, 1);
-
-  double totalBillAmount = 84000;
-  double workerWagesAmount = 23000;
-  double otherExpensesAmount = 7000;
-
   // Date/Month Picker
-  Future<void> _selectDate(BuildContext context) async {
+  Future<void> _selectDate(BuildContext context, MoreController controller) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate,
+      initialDate: controller.reportsSelectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
       builder: (context, child) {
@@ -42,9 +33,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
 
     if (picked != null) {
-      setState(() {
-        selectedDate = picked;
-      });
+      controller.setReportsSelectedDate(picked);
     }
   }
 
@@ -68,181 +57,169 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final double estimatedProfit =
-        totalBillAmount - workerWagesAmount - otherExpensesAmount;
+    Get.put(MoreController());
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'রিপোর্ট',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'মাসের কাজ ও হিসাব',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: const AppCustomAppBar(
+        title: 'রিপোর্ট',
+        subtitle: 'মাসের কাজ ও হিসাব',
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Month Field
-            Text('মাস', style: AppTextStyles.mediumBlackBold),
-            SizedBox(height: 6.h),
-            _buildMonthSelectorBox(),
+      body: GetBuilder<MoreController>(
+        builder: (controller) {
+          final double estimatedProfit = controller.estimatedProfit;
 
-            SizedBox(height: 14.h),
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Month Field
+                Text('মাস', style: AppTextStyles.mediumBlackBold),
+                SizedBox(height: 6.h),
+                _buildMonthSelectorBox(context, controller),
 
-            // 2. Summary 2x2 Grid (4 Cards)
-            _buildSummaryGrid(),
+                SizedBox(height: 14.h),
 
-            SizedBox(height: 16.h),
+                // 2. Summary 2x2 Grid (4 Cards)
+                _buildSummaryGrid(),
 
-            // 3. Section Title: "এই মাসের কাজের হিসাব"
-            Text(
-              'এই মাসের কাজের হিসাব',
-              style: AppTextStyles.custom(
-                size: 16.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
+                SizedBox(height: 16.h),
 
-            SizedBox(height: 10.h),
-
-            // 4. Monthly Calculation Card
-            AppCard(
-              child: Column(
-                children: [
-                  _buildStatementRow('মোট বিল',
-                      '৳${totalBillAmount.toStringAsFixed(0)}', AppColors.textPrimary),
-                  Divider(height: 16.h, color: AppColors.border),
-                  _buildStatementRow('কর্মীর মজুরি',
-                      '৳${workerWagesAmount.toStringAsFixed(0)}', AppColors.textPrimary),
-                  Divider(height: 16.h, color: AppColors.border),
-                  _buildStatementRow('অন্য খরচ',
-                      '৳${otherExpensesAmount.toStringAsFixed(0)}', AppColors.textPrimary),
-                  Divider(height: 16.h, color: AppColors.border),
-                  _buildStatementRow('আনুমানিক লাভ',
-                      '৳${estimatedProfit.toStringAsFixed(0)}', const Color(0xFF079455)),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 12.h),
-
-            // 5. Info Notice Box
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    color: AppColors.primary,
-                    size: 20.sp,
+                // 3. Section Title: "এই মাসের কাজের হিসাব"
+                Text(
+                  'এই মাসের কাজের হিসাব',
+                  style: AppTextStyles.custom(
+                    size: 16.sp,
+                    color: AppColors.textPrimary,
+                    weight: FontWeight.w700,
                   ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      'লাভ মোট বিলের হিসাবে। হাতে পাওয়া টাকার সাথে এক নাও হতে পারে।',
-                      style: AppTextStyles.custom(
-                        size: 12.sp,
+                ),
+
+                SizedBox(height: 10.h),
+
+                // 4. Monthly Calculation Card
+                AppCard(
+                  child: Column(
+                    children: [
+                      _buildStatementRow(
+                          'মোট বিল',
+                          '৳${controller.totalBillAmount.toStringAsFixed(0)}',
+                          AppColors.textPrimary),
+                      Divider(height: 16.h, color: AppColors.border),
+                      _buildStatementRow(
+                          'কর্মীর মজুরি',
+                          '৳${controller.workerWagesAmount.toStringAsFixed(0)}',
+                          AppColors.textPrimary),
+                      Divider(height: 16.h, color: AppColors.border),
+                      _buildStatementRow(
+                          'অন্য খরচ',
+                          '৳${controller.otherExpensesAmount.toStringAsFixed(0)}',
+                          AppColors.textPrimary),
+                      Divider(height: 16.h, color: AppColors.border),
+                      _buildStatementRow(
+                          'আনুমানিক লাভ',
+                          '৳${estimatedProfit.toStringAsFixed(0)}',
+                          const Color(0xFF079455)),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 12.h),
+
+                // 5. Info Notice Box
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
                         color: AppColors.primary,
+                        size: 20.sp,
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 14.h),
-
-            // 6. Client Due Link Card ("কার কাছে কত পাওনা")
-            AppCard(
-              onTap: () {
-                Get.toNamed(AppRoutes.clientsScreen);
-              },
-              child: Row(
-                children: [
-                  Container(
-                    width: 42.w,
-                    height: 42.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Icon(
-                      Icons.groups_outlined,
-                      color: AppColors.primary,
-                      size: 22.sp,
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'কার কাছে কত পাওনা',
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          'লাভ মোট বিলের হিসাবে। হাতে পাওয়া টাকার সাথে এক নাও হতে পারে।',
                           style: AppTextStyles.custom(
-                            size: 16.sp,
-                            color: AppColors.textPrimary,
-                            weight: FontWeight.w700,
+                            size: 12.sp,
+                            color: AppColors.primary,
                           ),
                         ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          'ক্লায়েন্ট অনুযায়ী দেখুন',
-                          style: AppTextStyles.smallGrey,
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 14.h),
+
+                // 6. Client Due Link Card ("কার কাছে কত পাওনা")
+                AppCard(
+                  onTap: () {
+                    Get.toNamed(AppRoutes.clientsScreen);
+                  },
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42.w,
+                        height: 42.w,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight,
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
-                      ],
-                    ),
+                        child: Icon(
+                          Icons.groups_outlined,
+                          color: AppColors.primary,
+                          size: 22.sp,
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'কার কাছে কত পাওনা',
+                              style: AppTextStyles.custom(
+                                size: 16.sp,
+                                color: AppColors.textPrimary,
+                                weight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              'ক্লায়েন্ট অনুযায়ী দেখুন',
+                              style: AppTextStyles.smallGrey,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.textSecondary,
+                        size: 22.sp,
+                      ),
+                    ],
                   ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: AppColors.textSecondary,
-                    size: 22.sp,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   // Month Selector Box Helper
-  Widget _buildMonthSelectorBox() {
+  Widget _buildMonthSelectorBox(
+      BuildContext context, MoreController controller) {
     return InkWell(
-      onTap: () => _selectDate(context),
+      onTap: () => _selectDate(context, controller),
       borderRadius: BorderRadius.circular(12.r),
       child: Container(
         height: 52.h,
@@ -262,7 +239,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             SizedBox(width: 8.w),
             Expanded(
               child: Text(
-                _formatMonth(selectedDate),
+                _formatMonth(controller.reportsSelectedDate),
                 style: AppTextStyles.mediumBlackBold,
               ),
             ),

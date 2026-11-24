@@ -4,18 +4,16 @@ class MaterialCategoryModel {
   final String id;
   final String title;
   final String englishTitle;
-  final String countText;
+  final String templateCountText;
   final IconData icon;
-  final Color iconBgColor;
-  final Color iconColor;
 
   const MaterialCategoryModel({
     required this.id,
     required this.title,
     required this.englishTitle,
-    required this.countText,
+    required this.templateCountText,
     required this.icon,
-    required this.iconBgColor,
-    required this.iconColor,
   });
+
+  String get countText => templateCountText;
 }

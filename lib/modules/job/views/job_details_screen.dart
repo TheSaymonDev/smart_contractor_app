@@ -5,79 +5,46 @@ import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
+import 'package:smart_contractor_app/core/widgets/app_outlined_button.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
+import 'package:smart_contractor_app/modules/job/controllers/job_controller.dart';
 import 'package:smart_contractor_app/modules/main/controllers/main_controller.dart';
 
-class JobDetailsScreen extends StatefulWidget {
+class JobDetailsScreen extends StatelessWidget {
   const JobDetailsScreen({super.key});
-
-  @override
-  State<JobDetailsScreen> createState() => _JobDetailsScreenState();
-}
-
-class _JobDetailsScreenState extends State<JobDetailsScreen> {
-  int selectedTabIndex = 0;
-
-  final List<String> tabLabels = [
-    'সারাংশ',
-    'মালামাল',
-    'হাজিরা',
-    'হিসাব',
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'কাজের বিস্তারিত',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'করিমের বাসা',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: const AppCustomAppBar(
+        title: 'কাজের বিস্তারিত',
+        subtitle: 'করিমের বাসা',
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Brief Job Card
-            _buildBriefJobCard(),
+      body: GetBuilder<JobController>(
+        builder: (controller) {
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Brief Job Card
+                _buildBriefJobCard(),
 
-            SizedBox(height: 12.h),
+                SizedBox(height: 12.h),
 
-            // 2. Navigation Tabs Bar
-            _buildNavigationTabs(),
+                // 2. Navigation Tabs Bar
+                _buildNavigationTabs(controller),
 
-            SizedBox(height: 16.h),
+                SizedBox(height: 16.h),
 
-            // 3. Dynamic Tab Content View
-            _buildTabContent(),
-          ],
-        ),
+                // 3. Dynamic Tab Content View
+                _buildTabContent(controller),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -138,7 +105,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   }
 
   // Navigation Tabs Bar
-  Widget _buildNavigationTabs() {
+  Widget _buildNavigationTabs(JobController controller) {
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
@@ -147,15 +114,11 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
-        children: List.generate(tabLabels.length, (index) {
-          final isSelected = selectedTabIndex == index;
+        children: List.generate(controller.jobDetailsTabLabels.length, (index) {
+          final isSelected = controller.jobDetailsTabIndex == index;
           return Expanded(
             child: InkWell(
-              onTap: () {
-                setState(() {
-                  selectedTabIndex = index;
-                });
-              },
+              onTap: () => controller.setJobDetailsTabIndex(index),
               borderRadius: BorderRadius.circular(9.r),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
@@ -166,7 +129,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   borderRadius: BorderRadius.circular(9.r),
                 ),
                 child: Text(
-                  tabLabels[index],
+                  controller.jobDetailsTabLabels[index],
                   style: AppTextStyles.custom(
                     size: 12.sp,
                     color: isSelected ? Colors.white : AppColors.textSecondary,
@@ -182,8 +145,8 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   }
 
   // Dynamic Tab Content Selector
-  Widget _buildTabContent() {
-    switch (selectedTabIndex) {
+  Widget _buildTabContent(JobController controller) {
+    switch (controller.jobDetailsTabIndex) {
       case 1:
         return _buildMaterialsTab();
       case 2:
@@ -192,14 +155,14 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         return _buildAccountsTab();
       case 0:
       default:
-        return _buildSummaryTab();
+        return _buildSummaryTab(controller);
     }
   }
 
   // ==========================================
   // TAB 0: saraamsho (Summary Tab)
   // ==========================================
-  Widget _buildSummaryTab() {
+  Widget _buildSummaryTab(JobController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -254,11 +217,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
 
         // Materials Card Link -> Tab 1
         AppCard(
-          onTap: () {
-            setState(() {
-              selectedTabIndex = 1;
-            });
-          },
+          onTap: () => controller.setJobDetailsTabIndex(1),
           child: Row(
             children: [
               Container(
@@ -279,7 +238,10 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('মালামালের তালিকা', style: AppTextStyles.mediumBlackBold),
+                    Text(
+                      'মালামালের তালিকা',
+                      style: AppTextStyles.mediumBlackBold,
+                    ),
                     SizedBox(height: 2.h),
                     Text(
                       '৮টি মালামাল • PDF তৈরি করুন',
@@ -301,11 +263,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
 
         // Days & Workers Card Link -> Tab 2
         AppCard(
-          onTap: () {
-            setState(() {
-              selectedTabIndex = 2;
-            });
-          },
+          onTap: () => controller.setJobDetailsTabIndex(2),
           child: Row(
             children: [
               Container(
@@ -326,12 +284,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('কাজের দিন ও কর্মী', style: AppTextStyles.mediumBlackBold),
-                    SizedBox(height: 2.h),
                     Text(
-                      '৩ দিন • ৪ জন কর্মী',
-                      style: AppTextStyles.smallGrey,
+                      'কাজের দিন ও কর্মী',
+                      style: AppTextStyles.mediumBlackBold,
                     ),
+                    SizedBox(height: 2.h),
+                    Text('৩ দিন • ৪ জন কর্মী', style: AppTextStyles.smallGrey),
                   ],
                 ),
               ),
@@ -355,34 +313,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         Row(
           children: [
             Expanded(
-              child: InkWell(
-                onTap: () {
+              child: AppOutlinedButton(
+                onPressed: () {
                   Get.toNamed(AppRoutes.jobManagementScreen);
                 },
-                borderRadius: BorderRadius.circular(12.r),
-                child: Container(
-                  height: 48.h,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.primary, width: 1.5),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.edit_outlined,
-                          color: AppColors.primary, size: 18.sp),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'কাজের তথ্য এডিট',
-                        style: AppTextStyles.custom(
-                          size: 14.sp,
-                          color: AppColors.primary,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                text: 'কাজের তথ্য এডিট',
+                icon: Icons.edit_outlined,
               ),
             ),
             SizedBox(width: 10.w),
@@ -407,9 +343,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     );
   }
 
-  // ==========================================
   // TAB 1: maalamaal (Materials Tab)
-  // ==========================================
   Widget _buildMaterialsTab() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,13 +358,22 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('মালামালের তালিকা', style: AppTextStyles.mediumBlackBold),
+                      Text(
+                        'মালামালের তালিকা',
+                        style: AppTextStyles.mediumBlackBold,
+                      ),
                       SizedBox(height: 2.h),
-                      Text('বাথরুমের পানির লাইন', style: AppTextStyles.smallGrey),
+                      Text(
+                        'বাথরুমের পানির লাইন',
+                        style: AppTextStyles.smallGrey,
+                      ),
                     ],
                   ),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(20.r),
@@ -480,68 +423,22 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         SizedBox(height: 12.h),
 
         // Action Buttons: Edit List & Add Templates
-        InkWell(
-          onTap: () {
-            Get.toNamed(AppRoutes.materialItemsEditScreen);
+        AppOutlinedButton(
+          onPressed: () {
+            Get.toNamed(AppRoutes.materialItemsListScreen);
           },
-          borderRadius: BorderRadius.circular(12.r),
-          child: Container(
-            height: 48.h,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: AppColors.primary, width: 1.5),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.edit_outlined, color: AppColors.primary, size: 18.sp),
-                SizedBox(width: 8.w),
-                Text(
-                  'তালিকা এডিট করুন',
-                  style: AppTextStyles.custom(
-                    size: 14.sp,
-                    color: AppColors.primary,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          text: 'তালিকা এডিট করুন',
+          icon: Icons.edit_outlined,
         ),
 
         SizedBox(height: 8.h),
 
-        InkWell(
-          onTap: () {
-            Get.toNamed(AppRoutes.materialTemplateCategoriesScreen);
+        AppOutlinedButton(
+          onPressed: () {
+            Get.toNamed(AppRoutes.materialTemplateSelectScreen);
           },
-          borderRadius: BorderRadius.circular(12.r),
-          child: Container(
-            height: 48.h,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: AppColors.primary, width: 1.5),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.layers_outlined, color: AppColors.primary, size: 18.sp),
-                SizedBox(width: 8.w),
-                Text(
-                  'আরও টেমপ্লেট যোগ করুন',
-                  style: AppTextStyles.custom(
-                    size: 14.sp,
-                    color: AppColors.primary,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          text: 'আরও টেমপ্লেট যোগ করুন',
+          icon: Icons.layers_outlined,
         ),
 
         SizedBox(height: 12.h),
@@ -571,17 +468,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(name, style: AppTextStyles.mediumGrey),
-        Text(
-          quantity,
-          style: AppTextStyles.mediumBlackBold,
-        ),
+        Text(quantity, style: AppTextStyles.mediumBlackBold),
       ],
     );
   }
 
-  // ==========================================
   // TAB 2: hajira (Attendance Tab)
-  // ==========================================
   Widget _buildAttendanceTab() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -632,7 +524,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         SizedBox(height: 12.h),
 
         // Info Notice Box
-        _buildInfoNoticeBox('একই কর্মীর আজকের হাজিরা আগে দেওয়া থাকলে সেটাই খুলবে।'),
+        _buildInfoNoticeBox(
+          'একই কর্মীর আজকের হাজিরা আগে দেওয়া থাকলে সেটাই খুলবে।',
+        ),
 
         SizedBox(height: 24.h),
 
@@ -696,9 +590,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     );
   }
 
-  // ==========================================
   // TAB 3: hisab (Accounts Tab)
-  // ==========================================
   Widget _buildAccountsTab() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -707,9 +599,17 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         AppCard(
           child: Column(
             children: [
-              _buildAccountRow('ঠিক করা মজুরি', '৳২৬,০০০', AppColors.textPrimary),
+              _buildAccountRow(
+                'ঠিক করা মজুরি',
+                '৳২৬,০০০',
+                AppColors.textPrimary,
+              ),
               Divider(height: 16.h, color: AppColors.border),
-              _buildAccountRow('বাড়তি কাজের বিল', '৳২,০০০', AppColors.textPrimary),
+              _buildAccountRow(
+                'বাড়তি কাজের বিল',
+                '৳২,০০০',
+                AppColors.textPrimary,
+              ),
               Divider(height: 16.h, color: AppColors.border),
               _buildAccountRow('মোট বিল', '৳২৮,০০০', AppColors.primary),
               Divider(height: 16.h, color: AppColors.border),
@@ -730,67 +630,22 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         Row(
           children: [
             Expanded(
-              child: InkWell(
-                onTap: () {
+              child: AppOutlinedButton(
+                onPressed: () {
                   Get.toNamed(AppRoutes.wageAndExpenseScreen, arguments: 0);
                 },
-                borderRadius: BorderRadius.circular(12.r),
-                child: Container(
-                  height: 46.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: AppColors.primary, width: 1.5),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.edit_outlined,
-                          color: AppColors.primary, size: 18.sp),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'মজুরি / বাড়তি বিল',
-                        style: AppTextStyles.custom(
-                          size: 13.sp,
-                          color: AppColors.primary,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                text: 'মজুরি / বাড়তি বিল',
+                icon: Icons.edit_outlined,
               ),
             ),
             SizedBox(width: 10.w),
             Expanded(
-              child: InkWell(
-                onTap: () {
+              child: AppOutlinedButton(
+                onPressed: () {
                   Get.toNamed(AppRoutes.wageAndExpenseScreen, arguments: 2);
                 },
-                borderRadius: BorderRadius.circular(12.r),
-                child: Container(
-                  height: 46.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: AppColors.primary, width: 1.5),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add, color: AppColors.primary, size: 18.sp),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'খরচ লিখুন',
-                        style: AppTextStyles.custom(
-                          size: 13.sp,
-                          color: AppColors.primary,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                text: 'খরচ লিখুন',
+                icon: Icons.add,
               ),
             ),
           ],
@@ -826,38 +681,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         Row(
           children: [
             Expanded(
-              child: InkWell(
-                onTap: () {
-                  Get.snackbar('ফাইনাল বিল', 'ফাইনাল বিল জেনারেট হচ্ছে...');
+              child: AppOutlinedButton(
+                onPressed: () {
+                  Get.toNamed(AppRoutes.finalBillPdfPreviewScreen);
                 },
-                borderRadius: BorderRadius.circular(12.r),
-                child: Container(
-                  height: 48.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: AppColors.primary, width: 1.5),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.description_outlined,
-                        color: AppColors.primary,
-                        size: 20.sp,
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'ফাইনাল বিল',
-                        style: AppTextStyles.custom(
-                          size: 14.sp,
-                          color: AppColors.primary,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                text: 'ফাইনাল বিল',
+                icon: Icons.description_outlined,
               ),
             ),
             SizedBox(width: 10.w),

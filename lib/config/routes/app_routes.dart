@@ -30,14 +30,15 @@ class AppRoutes {
   static const settingsAndHelpScreen = '/settings_and_help_screen';
 
   // Material Wizard Routes
-  static const materialTemplateCategoriesScreen = '/material_template_categories';
+  static const materialTemplateSelectScreen = '/material_template_select';
+  static const materialTemplateCategoriesScreen = materialTemplateSelectScreen;
   static const materialTemplateListScreen = '/material_template_list';
-  static const materialTemplateDetailScreen = '/material_template_detail';
   static const myMaterialTemplatesScreen = '/my_material_templates';
   static const myTemplateDetailsScreen = '/my_template_details_screen';
   static const customTemplateCreateScreen = '/custom_template_create';
   static const directMaterialListCreateScreen = '/direct_material_list_create';
-  static const materialItemsEditScreen = '/material_items_edit';
+  static const materialItemsListScreen = '/material_items_list';
+  static const materialItemsEditScreen = materialItemsListScreen;
   static const materialItemAddEditScreen = '/material_item_add_edit';
   static const sameMaterialsMergeScreen = '/same_materials_merge';
   static const materialPdfInfoScreen = '/material_pdf_info';

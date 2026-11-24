@@ -5,62 +5,28 @@ import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
+import 'package:smart_contractor_app/core/widgets/app_outlined_button.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
 
-class MyTemplateDetailsScreen extends StatefulWidget {
+class MyTemplateDetailsScreen extends StatelessWidget {
   const MyTemplateDetailsScreen({super.key});
 
   @override
-  State<MyTemplateDetailsScreen> createState() =>
-      _MyTemplateDetailsScreenState();
-}
+  Widget build(BuildContext context) {
+    String templateTitle = '২ বাথরুমের পানির লাইন';
+    const String templateSubtitle = 'পাইপ ফিটিংস • ৮টি মালামাল';
 
-class _MyTemplateDetailsScreenState extends State<MyTemplateDetailsScreen> {
-  String templateTitle = '২ বাথরুমের পানির লাইন';
-  String templateSubtitle = 'পাইপ ফিটিংস • ৮টি মালামাল';
-
-  @override
-  void initState() {
-    super.initState();
     final args = Get.arguments;
     if (args is Map<String, dynamic> && args.containsKey('title')) {
       templateTitle = args['title'].toString();
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'নিজের টেমপ্লেট',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              templateTitle,
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: AppCustomAppBar(
+        title: 'নিজের টেমপ্লেট',
+        subtitle: templateTitle,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
@@ -68,7 +34,7 @@ class _MyTemplateDetailsScreenState extends State<MyTemplateDetailsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Brief Template Card
-            _buildBriefTemplateCard(),
+            _buildBriefTemplateCard(templateTitle, templateSubtitle),
 
             SizedBox(height: 14.h),
 
@@ -118,39 +84,12 @@ class _MyTemplateDetailsScreenState extends State<MyTemplateDetailsScreen> {
               children: [
                 // Edit Button
                 Expanded(
-                  child: InkWell(
-                    onTap: () {
+                  child: AppOutlinedButton(
+                    onPressed: () {
                       Get.toNamed(AppRoutes.customTemplateCreateScreen);
                     },
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Container(
-                      height: 48.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border:
-                            Border.all(color: AppColors.primary, width: 1.5),
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.edit_outlined,
-                            color: AppColors.primary,
-                            size: 18.sp,
-                          ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            'এডিট করুন',
-                            style: AppTextStyles.custom(
-                              size: 14.sp,
-                              color: AppColors.primary,
-                              weight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    text: 'এডিট করুন',
+                    icon: Icons.edit_outlined,
                   ),
                 ),
 
@@ -158,8 +97,8 @@ class _MyTemplateDetailsScreenState extends State<MyTemplateDetailsScreen> {
 
                 // Copy Button
                 Expanded(
-                  child: InkWell(
-                    onTap: () {
+                  child: AppOutlinedButton(
+                    onPressed: () {
                       Get.snackbar(
                         'কপি করা হয়েছে',
                         '$templateTitle এর একটি নতুন কপি তৈরি করা হয়েছে',
@@ -167,35 +106,8 @@ class _MyTemplateDetailsScreenState extends State<MyTemplateDetailsScreen> {
                       );
                       Get.toNamed(AppRoutes.customTemplateCreateScreen);
                     },
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Container(
-                      height: 48.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border:
-                            Border.all(color: AppColors.primary, width: 1.5),
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.copy_rounded,
-                            color: AppColors.primary,
-                            size: 18.sp,
-                          ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            'কপি বানান',
-                            style: AppTextStyles.custom(
-                              size: 14.sp,
-                              color: AppColors.primary,
-                              weight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    text: 'কপি বানান',
+                    icon: Icons.copy_rounded,
                   ),
                 ),
               ],
@@ -237,7 +149,7 @@ class _MyTemplateDetailsScreenState extends State<MyTemplateDetailsScreen> {
             // 6. Bottom Action Primary Button
             AppPrimaryButton(
               onPressed: () {
-                Get.toNamed(AppRoutes.materialItemsEditScreen);
+                Get.toNamed(AppRoutes.materialItemsListScreen);
               },
               text: 'এই তালিকা ব্যবহার করুন',
               icon: Icons.chevron_right_rounded,
@@ -249,7 +161,7 @@ class _MyTemplateDetailsScreenState extends State<MyTemplateDetailsScreen> {
   }
 
   // Brief Template Card Helper
-  Widget _buildBriefTemplateCard() {
+  Widget _buildBriefTemplateCard(String templateTitle, String templateSubtitle) {
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

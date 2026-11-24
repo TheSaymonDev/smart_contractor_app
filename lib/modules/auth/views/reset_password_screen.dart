@@ -3,10 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
-import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
-import 'package:smart_contractor_app/core/widgets/app_brand_header.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
 import 'package:smart_contractor_app/core/widgets/app_text_field.dart';
+import 'package:smart_contractor_app/modules/auth/controllers/auth_controller.dart';
 
 class ResetPasswordScreen extends StatelessWidget {
   const ResetPasswordScreen({super.key});
@@ -14,102 +14,93 @@ class ResetPasswordScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          // Logo + App Name
-          const AppBrandHeader(),
+      backgroundColor: AppColors.background,
+      appBar: const AppCustomAppBar(
+        title: 'নতুন পাসওয়ার্ড',
+        subtitle: 'আপনার অ্যাকাউন্ট সুরক্ষিত রাখুন',
+      ),
+      body: GetBuilder<AuthController>(
+        builder: (controller) {
+          return SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 24.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 12.h),
 
-          // Login Content
-          Expanded(
-            child: SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: Column(
-                  children: [
-                    SizedBox(height: 60.h),
-
-                    Text(
-                      'নতুন পাসওয়ার্ড সেট করুন',
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.custom(
-                        size: 28.sp,
-                        color: AppColors.textPrimary,
-                      ),
+                // 1. Center Lock Banner Icon Box
+                Center(
+                  child: Container(
+                    width: 72.w,
+                    height: 72.w,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(22.r),
                     ),
-
-                    Text(
-                      'আপনার একাউন্টের জন্য নতুন পাসওয়ার্ড দিন',
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.smallGrey,
+                    child: Icon(
+                      Icons.lock_outline_rounded,
+                      color: AppColors.primary,
+                      size: 38.sp,
                     ),
-
-                    SizedBox(height: 20.h),
-                    const AppTextField(
-                      label: 'নতুন পাসওয়ার্ড',
-                      hint: 'পাসওয়ার্ড লিখুন',
-                      icon: Icons.lock,
-                      suffixIcon: Icon(Icons.remove_red_eye_outlined),
-                    ),
-                    SizedBox(height: 8.h),
-                    const AppTextField(
-                      label: 'পাসওয়ার্ড নিশ্চিত করুন',
-                      hint: 'আবার পাসওয়ার্ড লিখুন',
-                      icon: Icons.lock,
-                      suffixIcon: Icon(Icons.remove_red_eye_outlined),
-                    ),
-                    SizedBox(height: 20.h),
-                    AppPrimaryButton(
-                      text: 'পাসওয়ার্ড সংরক্ষণ করুন',
-                      icon: Icons.save,
-                      onPressed: () {
-                        Get.offAllNamed(AppRoutes.logInScreen);
-                      },
-                    ),
-                    SizedBox(height: 20.h),
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.all(Radius.circular(12.r)),
-                        color: AppColors.primaryLight,
-                      ),
-                      padding: EdgeInsets.all(8.w),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.shield_moon,
-                            size: 60.sp,
-                            color: AppColors.primary,
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'শক্তিশালী পাসওয়ার্ড ব্যবহার করুন',
-                                  style: AppTextStyles.custom(
-                                    color: AppColors.primary,
-                                    size: 16.sp,
-                                  ),
-                                ),
-                                Text(
-                                  'অন্তত ৮ অক্ষর, বড় হাতের অক্ষর, ছোট হাতের অক্ষর, সংখ্যা ও বিশেষ চিহ্ন ব্যবহার করুন।',
-                                  style: AppTextStyles.smallBlack,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 20.h),
-                  ],
+                  ),
                 ),
-              ),
+
+                SizedBox(height: 32.h),
+
+                // 2. New Password Field
+                AppTextField(
+                  label: 'নতুন পাসওয়ার্ড',
+                  controller: controller.newPasswordController,
+                  hint: 'কমপক্ষে ৮ অক্ষর',
+                  icon: Icons.lock_outline_rounded,
+                  obscureText: controller.isResetPasswordObscured,
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      controller.toggleResetPasswordVisibility();
+                    },
+                    icon: Icon(
+                      controller.isResetPasswordObscured
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: AppColors.textSecondary,
+                      size: 20.sp,
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 14.h),
+
+                // 3. Confirm New Password Field
+                AppTextField(
+                  label: 'আবার নতুন পাসওয়ার্ড',
+                  controller: controller.resetConfirmPasswordController,
+                  hint: 'একই পাসওয়ার্ড লিখুন',
+                  icon: Icons.lock_outline_rounded,
+                  obscureText: controller.isResetPasswordObscured,
+                ),
+
+                SizedBox(height: 20.h),
+
+                // 4. Primary Save Password Button
+                AppPrimaryButton(
+                  onPressed: () {
+                    Get.snackbar(
+                      'পাসওয়ার্ড পরিবর্তিত হয়েছে',
+                      'নতুন পাসওয়ার্ড সফলভাবে সংরক্ষণ করা হয়েছে',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: AppColors.primary,
+                      colorText: Colors.white,
+                    );
+                    Get.offAllNamed(AppRoutes.logInScreen);
+                  },
+                  text: 'পাসওয়ার্ড সেভ করুন',
+                  icon: Icons.check_rounded,
+                ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

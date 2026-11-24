@@ -5,8 +5,10 @@ import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
+import 'package:smart_contractor_app/core/widgets/app_outlined_button.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
-import 'package:smart_contractor_app/modules/client/views/clients_screen.dart';
+import 'package:smart_contractor_app/modules/client/controllers/client_controller.dart';
 
 class ClientJobModel {
   final String title;
@@ -26,16 +28,8 @@ class ClientJobModel {
   });
 }
 
-class ClientDetailsScreen extends StatefulWidget {
+class ClientDetailsScreen extends StatelessWidget {
   const ClientDetailsScreen({super.key});
-
-  @override
-  State<ClientDetailsScreen> createState() => _ClientDetailsScreenState();
-}
-
-class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
-  String clientName = 'আব্দুল করিম';
-  String clientSubtitle = '01812-345678 • মিরপুর-১০, ঢাকা';
 
   final List<ClientJobModel> clientJobs = const [
     ClientJobModel(
@@ -57,8 +51,10 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
   ];
 
   @override
-  void initState() {
-    super.initState();
+  Widget build(BuildContext context) {
+    String clientName = 'আব্দুল করিম';
+    String clientSubtitle = '01812-345678 • মিরপুর-১০, ঢাকা';
+
     final args = Get.arguments;
     if (args is ClientModelData) {
       clientName = args.name;
@@ -66,41 +62,12 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
     } else if (args is Map<String, dynamic> && args.containsKey('name')) {
       clientName = args['name'].toString();
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'ক্লায়েন্টের বিস্তারিত',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              clientName,
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: AppCustomAppBar(
+        title: 'ক্লায়েন্টের বিস্তারিত',
+        subtitle: clientName,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
@@ -108,7 +75,7 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Client Brief Card
-            _buildClientBriefCard(),
+            _buildClientBriefCard(clientName, clientSubtitle),
 
             SizedBox(height: 14.h),
 
@@ -169,8 +136,8 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
               children: [
                 // Outlined Edit Info Button
                 Expanded(
-                  child: InkWell(
-                    onTap: () {
+                  child: AppOutlinedButton(
+                    onPressed: () {
                       Get.toNamed(
                         AppRoutes.clientManagementScreen,
                         arguments: {
@@ -180,34 +147,8 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
                         },
                       );
                     },
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Container(
-                      height: 48.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: AppColors.primary, width: 1.5),
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.edit_outlined,
-                            color: AppColors.primary,
-                            size: 18.sp,
-                          ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            'তথ্য এডিট',
-                            style: AppTextStyles.custom(
-                              size: 14.sp,
-                              color: AppColors.primary,
-                              weight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    text: 'তথ্য এডিট',
+                    icon: Icons.edit_outlined,
                   ),
                 ),
 
@@ -232,7 +173,7 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
   }
 
   // Client Brief Card Helper
-  Widget _buildClientBriefCard() {
+  Widget _buildClientBriefCard(String clientName, String clientSubtitle) {
     return AppCard(
       child: Row(
         children: [

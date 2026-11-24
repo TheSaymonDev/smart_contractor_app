@@ -5,6 +5,7 @@ import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_tab_header.dart';
 import 'package:smart_contractor_app/modules/main/controllers/main_controller.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -20,7 +21,11 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Top Header
-            _buildTopHeader(),
+            const AppTabHeader(
+              title: 'Smart Contractor',
+              subtitle: 'রহমান কন্ট্রাক্টর সার্ভিস',
+              icon: Icons.apartment,
+            ),
 
             SizedBox(height: 14.h),
 
@@ -44,46 +49,6 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  // Top Header
-  Widget _buildTopHeader() {
-    return Row(
-      children: [
-        Container(
-          width: 44.w,
-          height: 44.w,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Icon(
-            Icons.apartment,
-            color: Colors.white,
-            size: 26.sp,
-          ),
-        ),
-        SizedBox(width: 12.w),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Smart Contractor',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'রহমান কন্ট্রাক্টর সার্ভিস',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
-      ],
     );
   }
 
@@ -118,7 +83,7 @@ class HomeScreen extends StatelessWidget {
           SizedBox(height: 14.h),
           InkWell(
             onTap: () {
-              Get.toNamed(AppRoutes.materialTemplateCategoriesScreen);
+              Get.toNamed(AppRoutes.materialTemplateSelectScreen);
             },
             borderRadius: BorderRadius.circular(12.r),
             child: Container(

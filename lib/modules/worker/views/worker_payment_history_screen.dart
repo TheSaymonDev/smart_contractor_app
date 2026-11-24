@@ -5,7 +5,9 @@ import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
+import 'package:smart_contractor_app/modules/worker/controllers/worker_controller.dart';
 
 class PaymentHistoryRecord {
   final String id;
@@ -25,20 +27,8 @@ class PaymentHistoryRecord {
   });
 }
 
-class WorkerPaymentHistoryScreen extends StatefulWidget {
+class WorkerPaymentHistoryScreen extends StatelessWidget {
   const WorkerPaymentHistoryScreen({super.key});
-
-  @override
-  State<WorkerPaymentHistoryScreen> createState() =>
-      _WorkerPaymentHistoryScreenState();
-}
-
-class _WorkerPaymentHistoryScreenState
-    extends State<WorkerPaymentHistoryScreen> {
-  int selectedFilterIndex = 0;
-  DateTime selectedDate = DateTime(2026, 10, 1);
-
-  final List<String> filterLabels = ['সব', 'মজুরি', 'বেতন', 'অগ্রিম'];
 
   final List<PaymentHistoryRecord> historyRecords = const [
     PaymentHistoryRecord(
@@ -68,10 +58,11 @@ class _WorkerPaymentHistoryScreenState
   ];
 
   // Date/Month Picker
-  Future<void> _selectDate(BuildContext context) async {
+  Future<void> _selectDate(
+      BuildContext context, WorkerController controller) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate,
+      initialDate: controller.historySelectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
       builder: (context, child) {
@@ -89,9 +80,7 @@ class _WorkerPaymentHistoryScreenState
     );
 
     if (picked != null) {
-      setState(() {
-        selectedDate = picked;
-      });
+      controller.setHistorySelectedDate(picked);
     }
   }
 
@@ -113,130 +102,108 @@ class _WorkerPaymentHistoryScreenState
     return 'এই মাস • ${months[date.month - 1]} ${date.year}';
   }
 
-  List<PaymentHistoryRecord> get filteredRecords {
-    if (selectedFilterIndex == 0) return historyRecords;
+  List<PaymentHistoryRecord> _getFilteredRecords(WorkerController controller) {
+    if (controller.historyFilterIndex == 0) return historyRecords;
 
-    final String selectedPurpose = filterLabels[selectedFilterIndex];
-    return historyRecords
-        .where((r) => r.purpose == selectedPurpose)
-        .toList();
+    final String selectedPurpose =
+        controller.historyFilterLabels[controller.historyFilterIndex];
+    return historyRecords.where((r) => r.purpose == selectedPurpose).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final records = filteredRecords;
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'কর্মীদের পেমেন্ট',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'কবে কাকে কত দিয়েছেন',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: const AppCustomAppBar(
+        title: 'কর্মীদের পেমেন্ট',
+        subtitle: 'কবে কাকে কত দিয়েছেন',
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Month Selector Box
-            Text('সময়', style: AppTextStyles.mediumBlackBold),
-            SizedBox(height: 6.h),
-            _buildMonthSelectorBox(),
+      body: GetBuilder<WorkerController>(
+        builder: (controller) {
+          final records = _getFilteredRecords(controller);
 
-            SizedBox(height: 12.h),
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Month Selector Box
+                Text('সময়', style: AppTextStyles.mediumBlackBold),
+                SizedBox(height: 6.h),
+                _buildMonthSelectorBox(context, controller),
 
-            // 2. Filter Tabs Bar
-            _buildFilterTabs(),
+                SizedBox(height: 12.h),
 
-            SizedBox(height: 12.h),
+                // 2. Filter Tabs Bar
+                _buildFilterTabs(controller),
 
-            // 3. Summary Board Cards (2 Cards)
-            _buildSummaryBoard(),
+                SizedBox(height: 12.h),
 
-            SizedBox(height: 12.h),
+                // 3. Summary Board Cards (2 Cards)
+                _buildSummaryBoard(),
 
-            // 4. Payment History Cards List
-            ...records.map((rec) => Padding(
-                  padding: EdgeInsets.only(bottom: 8.h),
-                  child: _buildHistoryCard(rec),
-                )),
+                SizedBox(height: 12.h),
 
-            SizedBox(height: 4.h),
+                // 4. Payment History Cards List
+                ...records.map((rec) => Padding(
+                      padding: EdgeInsets.only(bottom: 8.h),
+                      child: _buildHistoryCard(rec),
+                    )),
 
-            // 5. Info Notice Box
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    color: AppColors.primary,
-                    size: 20.sp,
+                SizedBox(height: 4.h),
+
+                // 5. Info Notice Box
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      'কোনো পেমেন্ট খুলে বিস্তারিত ও সংশোধনের অপশন পাবেন।',
-                      style: AppTextStyles.custom(
-                        size: 12.sp,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
                         color: AppColors.primary,
+                        size: 20.sp,
                       ),
-                    ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          'কোনো পেমেন্ট খুলে বিস্তারিত ও সংশোধনের অপশন পাবেন।',
+                          style: AppTextStyles.custom(
+                            size: 12.sp,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            SizedBox(height: 24.h),
+                SizedBox(height: 24.h),
 
-            // 6. Bottom Action Button
-            AppPrimaryButton(
-              onPressed: () {
-                Get.toNamed(AppRoutes.bulkWorkerPaymentScreen);
-              },
-              text: 'একসাথে টাকা দিন',
-              icon: Icons.groups_outlined,
+                // 6. Bottom Action Button
+                AppPrimaryButton(
+                  onPressed: () {
+                    Get.toNamed(AppRoutes.bulkWorkerPaymentScreen);
+                  },
+                  text: 'একসাথে টাকা দিন',
+                  icon: Icons.groups_outlined,
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   // Month Selector Box
-  Widget _buildMonthSelectorBox() {
+  Widget _buildMonthSelectorBox(
+      BuildContext context, WorkerController controller) {
     return InkWell(
-      onTap: () => _selectDate(context),
+      onTap: () => _selectDate(context, controller),
       borderRadius: BorderRadius.circular(12.r),
       child: Container(
         height: 52.h,
@@ -256,7 +223,7 @@ class _WorkerPaymentHistoryScreenState
             SizedBox(width: 8.w),
             Expanded(
               child: Text(
-                _formatMonth(selectedDate),
+                _formatMonth(controller.historySelectedDate),
                 style: AppTextStyles.mediumBlackBold,
               ),
             ),
@@ -267,7 +234,7 @@ class _WorkerPaymentHistoryScreenState
   }
 
   // Filter Tabs Bar
-  Widget _buildFilterTabs() {
+  Widget _buildFilterTabs(WorkerController controller) {
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
@@ -276,15 +243,11 @@ class _WorkerPaymentHistoryScreenState
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
-        children: List.generate(filterLabels.length, (index) {
-          final isSelected = selectedFilterIndex == index;
+        children: List.generate(controller.historyFilterLabels.length, (index) {
+          final isSelected = controller.historyFilterIndex == index;
           return Expanded(
             child: InkWell(
-              onTap: () {
-                setState(() {
-                  selectedFilterIndex = index;
-                });
-              },
+              onTap: () => controller.setHistoryFilterIndex(index),
               borderRadius: BorderRadius.circular(9.r),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
@@ -295,7 +258,7 @@ class _WorkerPaymentHistoryScreenState
                   borderRadius: BorderRadius.circular(9.r),
                 ),
                 child: Text(
-                  filterLabels[index],
+                  controller.historyFilterLabels[index],
                   style: AppTextStyles.custom(
                     size: 12.sp,
                     color: isSelected ? Colors.white : AppColors.textSecondary,

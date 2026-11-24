@@ -6,241 +6,104 @@ import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
+import 'package:smart_contractor_app/core/widgets/app_tab_header.dart';
 import 'package:smart_contractor_app/core/widgets/app_text_field.dart';
+import 'package:smart_contractor_app/modules/job/controllers/job_controller.dart';
 import 'package:smart_contractor_app/modules/job/models/job_model.dart';
 
-class JobsScreen extends StatefulWidget {
+class JobsScreen extends StatelessWidget {
   const JobsScreen({super.key});
 
   @override
-  State<JobsScreen> createState() => _JobsScreenState();
-}
-
-class _JobsScreenState extends State<JobsScreen> {
-  final TextEditingController searchController = TextEditingController();
-  int selectedFilterIndex = 0;
-
-  final List<String> filterLabels = ['সব', 'চলছে', 'অপেক্ষায়', 'শেষ'];
-
-  final List<JobModel> allJobs = const [
-    JobModel(
-      id: '1',
-      clientName: 'করিমের বাসা',
-      workName: 'বাথরুমের পানির লাইন',
-      category: 'Bathroom',
-      location: 'মিরপুর, ঢাকা',
-      date: '20 - 24 Aug, 2026',
-      status: JobStatus.running,
-      dueAmount: 10000,
-    ),
-    JobModel(
-      id: '2',
-      clientName: 'সেলিমের দোকান',
-      workName: 'লাইট ও সুইচ বসানো',
-      category: 'Electrical',
-      location: 'মিরপুর, ঢাকা',
-      date: '18 - 22 Aug, 2026',
-      status: JobStatus.running,
-      dueAmount: 0,
-    ),
-    JobModel(
-      id: '3',
-      clientName: 'হানিফের বাড়ি',
-      workName: 'বেসিন বসানো',
-      category: 'Bathroom',
-      location: 'মিরপুর, ঢাকা',
-      date: '15 - 17 Aug, 2026',
-      status: JobStatus.completed,
-      dueAmount: 0,
-    ),
-    JobModel(
-      id: '4',
-      clientName: 'রহিমার বাসা',
-      workName: 'কমোড ফিটিং',
-      category: 'Bathroom',
-      location: 'উত্তরা, ঢাকা',
-      date: '27 - 29 Aug, 2026',
-      status: JobStatus.scheduled,
-      dueAmount: 6500,
-    ),
-    JobModel(
-      id: '5',
-      clientName: 'জামাল উদ্দিন',
-      workName: 'টিউবওয়েল বসানো',
-      category: 'Water System',
-      location: 'সাভার, ঢাকা',
-      date: '21 - 25 Aug, 2026',
-      status: JobStatus.running,
-      dueAmount: 12000,
-    ),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    searchController.addListener(() {
-      setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    searchController.dispose();
-    super.dispose();
-  }
-
-  List<JobModel> get filteredJobs {
-    final query = searchController.text.trim().toLowerCase();
-
-    return allJobs.where((job) {
-      // Status Filter
-      bool matchesStatus = true;
-      if (selectedFilterIndex == 1) {
-        matchesStatus = job.status == JobStatus.running;
-      } else if (selectedFilterIndex == 2) {
-        matchesStatus = job.status == JobStatus.scheduled;
-      } else if (selectedFilterIndex == 3) {
-        matchesStatus = job.status == JobStatus.completed;
-      }
-
-      // Search Query Filter
-      bool matchesSearch = query.isEmpty ||
-          job.clientName.toLowerCase().contains(query) ||
-          job.workName.toLowerCase().contains(query);
-
-      return matchesStatus && matchesSearch;
-    }).toList();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final jobs = filteredJobs;
+    Get.put(JobController());
 
     return SafeArea(
       bottom: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
-        child: Column(
-          children: [
-            // Top Header
-            _buildHeader(),
+      child: GetBuilder<JobController>(
+        builder: (controller) {
+          final jobs = controller.filteredJobs;
 
-            SizedBox(height: 12.h),
+          return Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+            child: Column(
+              children: [
+                // Top Header
+                const AppTabHeader(
+                  title: 'কাজ',
+                  subtitle: 'সব কাজের তালিকা',
+                  icon: Icons.apartment,
+                ),
 
-            // Search Bar
-            _buildSearchBar(),
+                SizedBox(height: 12.h),
 
-            SizedBox(height: 10.h),
+                // Search Bar
+                _buildSearchBar(controller),
 
-            // Filter Tabs
-            _buildFilterTabs(),
+                SizedBox(height: 10.h),
 
-            SizedBox(height: 12.h),
+                // Filter Tabs
+                _buildFilterTabs(controller),
 
-            // Jobs List + Info Box + Floating Action Button
-            Expanded(
-              child: Stack(
-                children: [
-                  ListView(
-                    padding: EdgeInsets.only(bottom: 80.h),
+                SizedBox(height: 12.h),
+
+                // Jobs List + Info Box + Floating Action Button
+                Expanded(
+                  child: Stack(
                     children: [
-                      // Job Cards
-                      ...jobs.map((job) {
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: 8.h),
-                          child: _buildJobCard(job),
-                        );
-                      }),
+                      ListView(
+                        padding: EdgeInsets.only(bottom: 80.h),
+                        children: [
+                          // Job Cards
+                          ...jobs.map((job) {
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: 8.h),
+                              child: _buildJobCard(job),
+                            );
+                          }),
 
-                      SizedBox(height: 6.h),
+                          SizedBox(height: 6.h),
 
-                      // Info Note Box
-                      _buildInfoNoteBox(),
+                          // Info Note Box
+                          _buildInfoNoteBox(),
+                        ],
+                      ),
+
+                      // Bottom Action Button
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 8.h,
+                        child: AppPrimaryButton(
+                          onPressed: () {
+                            Get.toNamed(AppRoutes.jobManagementScreen);
+                          },
+                          text: 'নতুন কাজ',
+                          icon: Icons.add,
+                        ),
+                      ),
                     ],
                   ),
-
-                  // Bottom Action Button
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 8.h,
-                    child: AppPrimaryButton(
-                      onPressed: () {
-                        Get.toNamed(AppRoutes.jobManagementScreen);
-                      },
-                      text: 'নতুন কাজ',
-                      icon: Icons.add,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  // Top Header Bar
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        Container(
-          width: 42.w,
-          height: 42.w,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Icon(
-            Icons.apartment,
-            color: Colors.white,
-            size: 24.sp,
-          ),
-        ),
-        SizedBox(width: 12.w),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'কাজ',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'সব কাজের তালিকা',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
-        const Spacer(),
-        IconButton(
-          onPressed: () {},
-          icon: Icon(
-            Icons.search,
-            color: AppColors.textSecondary,
-            size: 24.sp,
-          ),
-        ),
-      ],
-    );
-  }
-
   // Search Input Field
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(JobController controller) {
     return AppTextField(
-      controller: searchController,
+      controller: controller.searchController,
       hint: 'কাজ বা ক্লায়েন্টের নাম খুঁজুন',
       icon: Icons.search_rounded,
     );
   }
 
   // Filter Tabs Bar
-  Widget _buildFilterTabs() {
+  Widget _buildFilterTabs(JobController controller) {
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
@@ -249,15 +112,11 @@ class _JobsScreenState extends State<JobsScreen> {
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
-        children: List.generate(filterLabels.length, (index) {
-          final isSelected = selectedFilterIndex == index;
+        children: List.generate(controller.filterLabels.length, (index) {
+          final isSelected = controller.selectedFilterIndex == index;
           return Expanded(
             child: InkWell(
-              onTap: () {
-                setState(() {
-                  selectedFilterIndex = index;
-                });
-              },
+              onTap: () => controller.setFilterIndex(index),
               borderRadius: BorderRadius.circular(9.r),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
@@ -268,7 +127,7 @@ class _JobsScreenState extends State<JobsScreen> {
                   borderRadius: BorderRadius.circular(9.r),
                 ),
                 child: Text(
-                  filterLabels[index],
+                  controller.filterLabels[index],
                   style: AppTextStyles.custom(
                     size: 12.sp,
                     color: isSelected ? Colors.white : AppColors.textSecondary,
@@ -399,7 +258,7 @@ class _JobsScreenState extends State<JobsScreen> {
           SizedBox(width: 8.w),
           Expanded(
             child: Text(
-              'কাজ শেষ হলেও বাকি টাকা এখানে দেখা যাবে।',
+              'কাজ শেষ করলেও বাকি টাকা এখানে দেখা যাবে।',
               style: AppTextStyles.custom(
                 size: 12.sp,
                 color: AppColors.primary,

@@ -7,106 +7,105 @@ import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
 import 'package:smart_contractor_app/core/widgets/app_text_field.dart';
+import 'package:smart_contractor_app/modules/client/controllers/client_controller.dart';
 
-class ClientModelData {
-  final String id;
-  final String name;
-  final String phoneAndJobs;
-  final double dueAmount;
-  final bool isPaidAll;
-
-  const ClientModelData({
-    required this.id,
-    required this.name,
-    required this.phoneAndJobs,
-    required this.dueAmount,
-    this.isPaidAll = false,
-  });
-}
-
-class ClientsScreen extends StatefulWidget {
+class ClientsScreen extends StatelessWidget {
   const ClientsScreen({super.key});
 
   @override
-  State<ClientsScreen> createState() => _ClientsScreenState();
-}
-
-class _ClientsScreenState extends State<ClientsScreen> {
-  final TextEditingController searchController = TextEditingController();
-
-  final List<ClientModelData> clientsData = const [
-    ClientModelData(
-      id: '1',
-      name: 'আব্দুল করিম',
-      phoneAndJobs: '01812-345678 • ৩টি কাজ',
-      dueAmount: 10000,
-      isPaidAll: false,
-    ),
-    ClientModelData(
-      id: '2',
-      name: 'সেলিম মিয়া',
-      phoneAndJobs: '01813-456789 • ২টি কাজ',
-      dueAmount: 0,
-      isPaidAll: true,
-    ),
-    ClientModelData(
-      id: '3',
-      name: 'হানিফ মিয়া',
-      phoneAndJobs: '01814-567890 • ১টি কাজ',
-      dueAmount: 0,
-      isPaidAll: true,
-    ),
-    ClientModelData(
-      id: '4',
-      name: 'রহিমা বেগম',
-      phoneAndJobs: '01815-678901 • ১টি কাজ',
-      dueAmount: 4500,
-      isPaidAll: false,
-    ),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    searchController.addListener(() {
-      setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    searchController.dispose();
-    super.dispose();
-  }
-
-  List<ClientModelData> get filteredClients {
-    final query = searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return clientsData;
-
-    return clientsData.where((client) {
-      return client.name.toLowerCase().contains(query) ||
-          client.phoneAndJobs.toLowerCase().contains(query);
-    }).toList();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final clients = filteredClients;
+    Get.put(ClientController());
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
+    return SafeArea(
+      bottom: false,
+      child: GetBuilder<ClientController>(
+        builder: (controller) {
+          final clients = controller.filteredClients;
+
+          return Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+            child: Column(
+              children: [
+                // Top Header
+                _buildHeader(),
+
+                SizedBox(height: 12.h),
+
+                // Search Bar
+                _buildSearchBar(controller),
+
+                SizedBox(height: 12.h),
+
+                // Client Summary Stat Cards
+                _buildSummaryStats(),
+
+                SizedBox(height: 12.h),
+
+                // Clients List + Info Box + Floating Action Button
+                Expanded(
+                  child: Stack(
+                    children: [
+                      ListView(
+                        padding: EdgeInsets.only(bottom: 80.h),
+                        children: [
+                          // Client Cards
+                          ...clients.map((client) {
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: 8.h),
+                              child: _buildClientCard(client),
+                            );
+                          }),
+
+                          SizedBox(height: 6.h),
+
+                          // Info Note Box
+                          _buildInfoNoteBox(),
+                        ],
+                      ),
+
+                      // Bottom Action Button
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 8.h,
+                        child: AppPrimaryButton(
+                          onPressed: () {
+                            Get.toNamed(AppRoutes.clientManagementScreen);
+                          },
+                          text: 'নতুন ক্লায়েন্ট যোগ করুন',
+                          icon: Icons.person_add_alt_1_rounded,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Top Header Bar
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        Container(
+          width: 42.w,
+          height: 42.w,
+          decoration: BoxDecoration(
             color: AppColors.primary,
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Icon(
+            Icons.person_pin_rounded,
+            color: Colors.white,
             size: 24.sp,
           ),
         ),
-        title: Column(
+        SizedBox(width: 12.w),
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -119,66 +118,40 @@ class _ClientsScreenState extends State<ClientsScreen> {
             ),
             SizedBox(height: 2.h),
             Text(
-              'ক্লায়েন্ট ও পাওনা টাকা',
+              'সকল ক্লায়েন্ট ও কাজের হিসাব',
               style: AppTextStyles.smallGrey,
             ),
           ],
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Search Bar
-            _buildSearchBar(),
-
-            SizedBox(height: 12.h),
-
-            // 2. Summary Board (2 Cards)
-            _buildSummaryBoard(),
-
-            SizedBox(height: 12.h),
-
-            // 3. Client Cards List
-            ...clients.map((client) => Padding(
-                  padding: EdgeInsets.only(bottom: 8.h),
-                  child: _buildClientCard(client),
-                )),
-
-            SizedBox(height: 16.h),
-
-            // 4. Bottom Action Button
-            AppPrimaryButton(
-              onPressed: () {
-                Get.toNamed(AppRoutes.clientManagementScreen);
-              },
-              text: 'নতুন ক্লায়েন্ট যোগ করুন',
-              icon: Icons.add,
-            ),
-          ],
+        const Spacer(),
+        IconButton(
+          onPressed: () {},
+          icon: Icon(
+            Icons.search,
+            color: AppColors.textSecondary,
+            size: 24.sp,
+          ),
         ),
-      ),
+      ],
     );
   }
 
   // Search Input Bar
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(ClientController controller) {
     return AppTextField(
-      controller: searchController,
+      controller: controller.searchController,
       hint: 'নাম বা মোবাইল দিয়ে খুঁজুন',
       icon: Icons.search_rounded,
     );
   }
 
-  // Summary Board (2 Cards)
-  Widget _buildSummaryBoard() {
+  // Summary Stat Cards (মোট ক্লায়েন্ট & মোট পাওনা)
+  Widget _buildSummaryStats() {
     return Row(
       children: [
-        // Total Clients Card
         Expanded(
           child: AppCard(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -210,10 +183,10 @@ class _ClientsScreenState extends State<ClientsScreen> {
                 ),
                 SizedBox(height: 6.h),
                 Text(
-                  '১২ জন',
+                  '৪ জন',
                   style: AppTextStyles.custom(
-                    size: 20.sp,
-                    color: AppColors.primary,
+                    size: 15.sp,
+                    color: AppColors.textPrimary,
                     weight: FontWeight.w700,
                   ),
                 ),
@@ -221,13 +194,10 @@ class _ClientsScreenState extends State<ClientsScreen> {
             ),
           ),
         ),
-
-        SizedBox(width: 8.w),
-
-        // Total Due Card
+        SizedBox(width: 10.w),
         Expanded(
           child: AppCard(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -237,12 +207,12 @@ class _ClientsScreenState extends State<ClientsScreen> {
                       width: 28.w,
                       height: 28.w,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFEBEB),
+                        color: const Color(0xFFFFF4E5),
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                       child: Icon(
-                        Icons.payments_outlined,
-                        color: Colors.red,
+                        Icons.account_balance_wallet_outlined,
+                        color: const Color(0xFFE66A00),
                         size: 16.sp,
                       ),
                     ),
@@ -259,9 +229,9 @@ class _ClientsScreenState extends State<ClientsScreen> {
                 ),
                 SizedBox(height: 6.h),
                 Text(
-                  '৳১০,০০০',
+                  '৳১৬,৫০০',
                   style: AppTextStyles.custom(
-                    size: 20.sp,
+                    size: 15.sp,
                     color: Colors.red,
                     weight: FontWeight.w700,
                   ),
@@ -274,75 +244,99 @@ class _ClientsScreenState extends State<ClientsScreen> {
     );
   }
 
-  // Client Card Helper
+  // Individual Client Card
   Widget _buildClientCard(ClientModelData client) {
+    final bool hasDue = !client.dueText.contains('৳০');
+
     return AppCard(
       onTap: () {
         Get.toNamed(AppRoutes.clientDetailsScreen, arguments: client);
       },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                client.name,
+                style: AppTextStyles.custom(
+                  size: 16.sp,
+                  color: AppColors.textPrimary,
+                  weight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                client.dueText,
+                style: AppTextStyles.custom(
+                  size: 14.sp,
+                  color: hasDue ? Colors.red : const Color(0xFF079455),
+                  weight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: 4.h),
+
+          Text(
+            client.phoneAndJobs,
+            style: AppTextStyles.mediumGrey,
+          ),
+
+          SizedBox(height: 10.h),
+
+          Row(
+            children: [
+              Icon(
+                Icons.location_on_outlined,
+                size: 16.sp,
+                color: AppColors.textSecondary,
+              ),
+              SizedBox(width: 4.w),
+              Text(
+                client.location,
+                style: AppTextStyles.smallGrey,
+              ),
+              const Spacer(),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14.sp,
+                color: AppColors.textSecondary,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Info Note Box Helper
+  Widget _buildInfoNoteBox() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 22.r,
-            backgroundColor: AppColors.primaryLight,
-            child: Icon(
-              Icons.person_outline_rounded,
-              size: 26.sp,
-              color: AppColors.primary,
-            ),
+          Icon(
+            Icons.info_outline_rounded,
+            color: AppColors.primary,
+            size: 20.sp,
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 8.w),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  client.name,
-                  style: AppTextStyles.custom(
-                    size: 16.sp,
-                    color: AppColors.textPrimary,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  client.phoneAndJobs,
-                  style: AppTextStyles.smallGrey,
-                ),
-              ],
+            child: Text(
+              'ক্লায়েন্টের ওপর ট্যাপ করে সব কাজের হিসাব ও PDF দেখতে পাবেন।',
+              style: AppTextStyles.custom(
+                size: 12.sp,
+                color: AppColors.primary,
+              ),
             ),
           ),
-          if (client.isPaidAll)
-            Text(
-              'সব পেয়েছেন',
-              style: AppTextStyles.custom(
-                size: 14.sp,
-                color: const Color(0xFF079455),
-                weight: FontWeight.w700,
-              ),
-            )
-          else
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '৳${client.dueAmount.toStringAsFixed(0)}',
-                  style: AppTextStyles.custom(
-                    size: 16.sp,
-                    color: Colors.red,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  'পাওনা',
-                  style: AppTextStyles.custom(
-                    size: 11.sp,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
         ],
       ),
     );

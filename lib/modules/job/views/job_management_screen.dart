@@ -4,40 +4,22 @@ import 'package:get/get.dart';
 import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
 import 'package:smart_contractor_app/core/widgets/app_text_field.dart';
+import 'package:smart_contractor_app/modules/job/controllers/job_controller.dart';
 
-class JobManagementScreen extends StatefulWidget {
+class JobManagementScreen extends StatelessWidget {
   const JobManagementScreen({super.key});
 
-  @override
-  State<JobManagementScreen> createState() => _JobManagementScreenState();
-}
-
-class _JobManagementScreenState extends State<JobManagementScreen> {
-  // Form Controllers
-  final TextEditingController workNameController =
-      TextEditingController(text: 'করিমের বাসা');
-  final TextEditingController addressController =
-      TextEditingController(text: 'মিরপুর-১০, ঢাকা');
-  final TextEditingController noteController = TextEditingController();
-
-  // Selected Values
-  String selectedClientName = 'আব্দুল করিম';
-  String selectedWorkType = 'পাইপ ফিটিংস';
-
-  DateTime startDate = DateTime(2026, 10, 23);
-  DateTime? endDate;
-
-  // Options
-  final List<String> clients = [
+  final List<String> clients = const [
     'আব্দুল করিম',
     'সেলিম মিয়া',
     'হানিফ স্টোর',
     'রহিমা বেগম',
   ];
 
-  final List<String> workTypes = [
+  final List<String> workTypes = const [
     'পাইপ ফিটিংস',
     'মোটর বসানো',
     'বেসিন ফিটিং',
@@ -46,10 +28,13 @@ class _JobManagementScreenState extends State<JobManagementScreen> {
   ];
 
   // Date Picker
-  Future<void> _selectDate(BuildContext context, bool isStartDate) async {
+  Future<void> _selectDate(
+      BuildContext context, JobController controller, bool isStartDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: isStartDate ? startDate : (endDate ?? DateTime.now()),
+      initialDate: isStartDate
+          ? controller.startDate
+          : (controller.endDate ?? DateTime.now()),
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
       builder: (context, child) {
@@ -67,13 +52,11 @@ class _JobManagementScreenState extends State<JobManagementScreen> {
     );
 
     if (picked != null) {
-      setState(() {
-        if (isStartDate) {
-          startDate = picked;
-        } else {
-          endDate = picked;
-        }
-      });
+      if (isStartDate) {
+        controller.setStartDate(picked);
+      } else {
+        controller.setEndDate(picked);
+      }
     }
   }
 
@@ -96,7 +79,8 @@ class _JobManagementScreenState extends State<JobManagementScreen> {
   }
 
   // Selection Bottom Sheet Helper
-  void _showSelectionBottomSheet({
+  void _showSelectionBottomSheet(
+    BuildContext context, {
     required String title,
     required List<Widget> children,
   }) {
@@ -124,228 +108,211 @@ class _JobManagementScreenState extends State<JobManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!Get.isRegistered<JobController>()) {
+      Get.put(JobController());
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'নতুন কাজ',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'আগে ক্লায়েন্ট বাছুন',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: const AppCustomAppBar(
+        title: 'নতুন কাজ',
+        subtitle: 'আগে ক্লায়েন্ট বাছুন',
       ),
-      body: SingleChildScrollView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Client Field
-            Text('ক্লায়েন্ট', style: AppTextStyles.mediumBlackBold),
-            SizedBox(height: 6.h),
-            _buildClientSelector(),
-
-            SizedBox(height: 6.h),
-            InkWell(
-              onTap: () {
-                Get.toNamed(AppRoutes.clientManagementScreen);
-              },
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 4.h),
-                child: Text(
-                  '+ নতুন ক্লায়েন্ট যোগ করুন',
-                  style: AppTextStyles.custom(
-                    size: 13.sp,
-                    color: AppColors.primary,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-
-            SizedBox(height: 12.h),
-
-            // 2. Work Name
-            AppTextField(
-              label: 'কাজের নাম',
-              controller: workNameController,
-              icon: Icons.work_outline_rounded,
-              hint: 'করিমের বাসা',
-            ),
-
-            SizedBox(height: 12.h),
-
-            // 3. Work Type Dropdown
-            Text('কাজের ধরন', style: AppTextStyles.mediumBlackBold),
-            SizedBox(height: 6.h),
-            _buildWorkTypeDropdown(),
-
-            SizedBox(height: 12.h),
-
-            // 4. Address Field
-            AppTextField(
-              label: 'কাজের ঠিকানা',
-              controller: addressController,
-              icon: Icons.location_on_outlined,
-              hint: 'মিরপুর-১০, ঢাকা',
-            ),
-
-            SizedBox(height: 12.h),
-
-            // 5. Dates Row
-            Row(
+      body: GetBuilder<JobController>(
+        builder: (controller) {
+          return SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Start Date
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('শুরু তারিখ', style: AppTextStyles.mediumBlackBold),
-                      SizedBox(height: 6.h),
-                      _buildDateBox(
-                        dateText: _formatDate(startDate),
-                        onTap: () => _selectDate(context, true),
+                // 1. Client Field
+                Text('ক্লায়েন্ট', style: AppTextStyles.mediumBlackBold),
+                SizedBox(height: 6.h),
+                _buildClientSelector(context, controller),
+
+                SizedBox(height: 6.h),
+                InkWell(
+                  onTap: () {
+                    Get.toNamed(AppRoutes.clientManagementScreen);
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4.h),
+                    child: Text(
+                      '+ নতুন ক্লায়েন্ট যোগ করুন',
+                      style: AppTextStyles.custom(
+                        size: 13.sp,
+                        color: AppColors.primary,
+                        weight: FontWeight.w700,
                       ),
-                    ],
+                    ),
                   ),
                 ),
-                SizedBox(width: 10.w),
 
-                // End Date (Optional)
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          text: 'শেষের তারিখ ',
-                          style: AppTextStyles.mediumBlackBold,
-                          children: [
-                            TextSpan(
-                              text: '(ইচ্ছা হলে)',
-                              style: AppTextStyles.smallGrey,
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 6.h),
-                      _buildDateBox(
-                        dateText: endDate != null
-                            ? _formatDate(endDate!)
-                            : 'পরে দিন',
-                        isOptional: endDate == null,
-                        onTap: () => _selectDate(context, false),
-                      ),
-                    ],
-                  ),
+                SizedBox(height: 12.h),
+
+                // 2. Work Name
+                AppTextField(
+                  label: 'কাজের নাম',
+                  controller: controller.workNameController,
+                  icon: Icons.work_outline_rounded,
+                  hint: 'করিমের বাসা',
                 ),
-              ],
-            ),
 
-            SizedBox(height: 12.h),
+                SizedBox(height: 12.h),
 
-            // 6. Additional Note (Optional)
-            AppTextField(
-              labelWidget: RichText(
-                text: TextSpan(
-                  text: 'কাজের নোট ',
-                  style: AppTextStyles.mediumBlackBold,
+                // 3. Work Type Dropdown
+                Text('কাজের ধরন', style: AppTextStyles.mediumBlackBold),
+                SizedBox(height: 6.h),
+                _buildWorkTypeDropdown(context, controller),
+
+                SizedBox(height: 12.h),
+
+                // 4. Address Field
+                AppTextField(
+                  label: 'কাজের ঠিকানা',
+                  controller: controller.jobAddressController,
+                  icon: Icons.location_on_outlined,
+                  hint: 'মিরপুর-১০, ঢাকা',
+                ),
+
+                SizedBox(height: 12.h),
+
+                // 5. Dates Row
+                Row(
                   children: [
-                    TextSpan(
-                      text: '(ইচ্ছা হলে)',
-                      style: AppTextStyles.smallGrey,
+                    // Start Date
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('শুরু তারিখ', style: AppTextStyles.mediumBlackBold),
+                          SizedBox(height: 6.h),
+                          _buildDateBox(
+                            dateText: _formatDate(controller.startDate),
+                            onTap: () => _selectDate(context, controller, true),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+
+                    // End Date (Optional)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          RichText(
+                            text: TextSpan(
+                              text: 'শেষের তারিখ ',
+                              style: AppTextStyles.mediumBlackBold,
+                              children: [
+                                TextSpan(
+                                  text: '(ইচ্ছা হলে)',
+                                  style: AppTextStyles.smallGrey,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 6.h),
+                          _buildDateBox(
+                            dateText: controller.endDate != null
+                                ? _formatDate(controller.endDate!)
+                                : 'পরে দিন',
+                            isOptional: controller.endDate == null,
+                            onTap: () => _selectDate(context, controller, false),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              controller: noteController,
-              maxLines: 2,
-              hint: 'যেমন: ২য় তলার বাথরুম',
-            ),
 
-            SizedBox(height: 14.h),
+                SizedBox(height: 12.h),
 
-            // Info Notice Box
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    color: AppColors.primary,
-                    size: 20.sp,
-                  ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      'শুরুতে কাজের অবস্থা "চলছে" থাকবে। মজুরি পরে ঠিক করতে পারবেন।',
-                      style: AppTextStyles.custom(
-                        size: 12.sp,
-                        color: AppColors.primary,
-                      ),
+                // 6. Additional Note (Optional)
+                AppTextField(
+                  labelWidget: RichText(
+                    text: TextSpan(
+                      text: 'কাজের নোট ',
+                      style: AppTextStyles.mediumBlackBold,
+                      children: [
+                        TextSpan(
+                          text: '(ইচ্ছা হলে)',
+                          style: AppTextStyles.smallGrey,
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
+                  controller: controller.jobNoteController,
+                  maxLines: 2,
+                  hint: 'যেমন: ২য় তলার বাথরুম',
+                ),
 
-            SizedBox(height: 24.h),
+                SizedBox(height: 14.h),
 
-            // Bottom Action Button
-            AppPrimaryButton(
-              onPressed: () {
-                Get.snackbar(
-                  'সফল হয়েছে',
-                  'নতুন কাজ সফলভাবে তৈরি করা হয়েছে',
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: AppColors.primary,
-                  colorText: Colors.white,
-                );
-                Future.delayed(const Duration(milliseconds: 600), () {
-                  Get.back();
-                });
-              },
-              text: 'কাজ তৈরি করুন',
-              icon: Icons.check_rounded,
+                // Info Notice Box
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: AppColors.primary,
+                        size: 20.sp,
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          'শুরুতে কাজের অবস্থা "চলছে" থাকবে। মজুরি পরে ঠিক করতে পারবেন।',
+                          style: AppTextStyles.custom(
+                            size: 12.sp,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 24.h),
+
+                // Bottom Action Button
+                AppPrimaryButton(
+                  onPressed: () {
+                    Get.snackbar(
+                      'সফল হয়েছে',
+                      'নতুন কাজ সফলভাবে তৈরি করা হয়েছে',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: AppColors.primary,
+                      colorText: Colors.white,
+                    );
+                    Future.delayed(const Duration(milliseconds: 600), () {
+                      Get.back();
+                    });
+                  },
+                  text: 'কাজ তৈরি করুন',
+                  icon: Icons.check_rounded,
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   // Client Selector Box
-  Widget _buildClientSelector() {
+  Widget _buildClientSelector(BuildContext context, JobController controller) {
     return InkWell(
       onTap: () {
         _showSelectionBottomSheet(
+          context,
           title: 'ক্লায়েন্ট নির্বাচন করুন',
           children: clients.map((client) {
             return ListTile(
@@ -355,9 +322,7 @@ class _JobManagementScreenState extends State<JobManagementScreen> {
               ),
               title: Text(client, style: AppTextStyles.mediumBlackBold),
               onTap: () {
-                setState(() {
-                  selectedClientName = client;
-                });
+                controller.setClientName(client);
                 Get.back();
               },
             );
@@ -383,7 +348,7 @@ class _JobManagementScreenState extends State<JobManagementScreen> {
             SizedBox(width: 10.w),
             Expanded(
               child: Text(
-                selectedClientName,
+                controller.selectedClientName,
                 style: AppTextStyles.mediumBlackBold,
               ),
             ),
@@ -394,18 +359,17 @@ class _JobManagementScreenState extends State<JobManagementScreen> {
   }
 
   // Work Type Dropdown Helper
-  Widget _buildWorkTypeDropdown() {
+  Widget _buildWorkTypeDropdown(BuildContext context, JobController controller) {
     return InkWell(
       onTap: () {
         _showSelectionBottomSheet(
+          context,
           title: 'কাজের ধরন নির্বাচন করুন',
           children: workTypes.map((type) {
             return ListTile(
               title: Text(type, style: AppTextStyles.mediumBlack),
               onTap: () {
-                setState(() {
-                  selectedWorkType = type;
-                });
+                controller.setWorkType(type);
                 Get.back();
               },
             );
@@ -431,7 +395,7 @@ class _JobManagementScreenState extends State<JobManagementScreen> {
             SizedBox(width: 8.w),
             Expanded(
               child: Text(
-                selectedWorkType,
+                controller.selectedWorkType,
                 style: AppTextStyles.mediumBlackBold,
               ),
             ),

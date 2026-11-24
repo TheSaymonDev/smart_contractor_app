@@ -1,11 +1,17 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:smart_contractor_app/config/routes/app_routes.dart';
+import 'package:pdfrx/pdfrx.dart';
+import 'package:smart_contractor_app/core/services/pdf/pdf_service.dart';
+import 'package:smart_contractor_app/core/services/pdf/templates/material_requisition_template.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
-import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
+import 'package:smart_contractor_app/core/widgets/app_outlined_button.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
+import 'package:smart_contractor_app/modules/material/controllers/material_wizard_controller.dart';
+import 'package:smart_contractor_app/modules/material/data/default_material_templates.dart';
 import 'package:smart_contractor_app/modules/material/widgets/material_wizard_stepper.dart';
 
 class MaterialPdfPreviewScreen extends StatefulWidget {
@@ -17,52 +23,103 @@ class MaterialPdfPreviewScreen extends StatefulWidget {
 }
 
 class _MaterialPdfPreviewScreenState extends State<MaterialPdfPreviewScreen> {
-  bool showPrice = false;
+  Uint8List? _cachedPdfBytes;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    final args = Get.arguments;
-    if (args is bool) {
-      showPrice = args;
+    _generatePdf();
+  }
+
+  Future<void> _generatePdf() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _cachedPdfBytes = null;
+    });
+
+    try {
+      final controller = Get.isRegistered<MaterialWizardController>()
+          ? Get.find<MaterialWizardController>()
+          : Get.put(MaterialWizardController());
+
+      // Fallback template items if opened directly
+      if (controller.selectedItems.isEmpty &&
+          defaultCategoryTemplates['প্লাম্বিং ও পাইপ ফিটিংস'] != null) {
+        final fallbackTpl =
+            defaultCategoryTemplates['প্লাম্বিং ও পাইপ ফিটিংস']!.first;
+        controller.selectedTemplate = fallbackTpl;
+        controller.selectedItems = List.from(fallbackTpl.items);
+      }
+
+      bool showPrice = controller.showPricesInPdf;
+      final args = Get.arguments;
+      if (args is bool) {
+        showPrice = args;
+      }
+
+      final fonts = await PdfService.loadBase64Fonts();
+
+      final String htmlContent = MaterialRequisitionPdfTemplate.generateHtml(
+        contractorName: controller.contractorName,
+        contractorPhone: controller.contractorPhone,
+        contractorAddress: controller.contractorAddress,
+        clientName: controller.clientName,
+        clientPhone: controller.clientPhone,
+        clientAddress: controller.clientAddress,
+        jobName: controller.jobName,
+        items: controller.selectedItems,
+        showPrice: showPrice,
+        grandTotal: controller.grandTotal,
+        clientNote: controller.clientNoteController.text.trim(),
+        regularFontBase64: fonts['regular'],
+        boldFontBase64: fonts['bold'],
+      );
+
+      final Uint8List pdfBytes = await PdfService.generateMaterialPdfFromHtml(
+        htmlContent,
+      );
+
+      if (mounted) {
+        setState(() {
+          _cachedPdfBytes = pdfBytes;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.isRegistered<MaterialWizardController>()
+        ? Get.find<MaterialWizardController>()
+        : Get.put(MaterialWizardController());
+
+    bool showPrice = controller.showPricesInPdf;
+    final args = Get.arguments;
+    if (args is bool) {
+      showPrice = args;
+    }
+
+    final String clientName = controller.clientName;
+    final String filename = 'Material_List_${clientName}_2026';
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'PDF প্রিভিউ',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              showPrice
-                  ? 'মালামালের তালিকা • দামসহ'
-                  : 'মালামালের তালিকা • দাম ছাড়া',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: AppCustomAppBar(
+        title: 'PDF প্রিভিউ',
+        subtitle: showPrice
+            ? 'মালামালের তালিকা • দামসহ'
+            : 'মালামালের তালিকা • দাম ছাড়া',
       ),
       body: Column(
         children: [
@@ -70,227 +127,84 @@ class _MaterialPdfPreviewScreenState extends State<MaterialPdfPreviewScreen> {
           const MaterialWizardStepper(currentStep: 4),
 
           Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 20.h),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
               child: Column(
                 children: [
-                  // Page Specs Bar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.description_outlined,
-                              size: 16.sp, color: AppColors.textSecondary),
-                          SizedBox(width: 4.w),
-                          Text('A4 • ১ পৃষ্ঠা', style: AppTextStyles.smallGrey),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Text('বড় করে দেখুন',
-                              style: AppTextStyles.smallGrey),
-                          SizedBox(width: 4.w),
-                          Icon(Icons.search,
-                              size: 16.sp, color: AppColors.textSecondary),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 10.h),
-
-                  // A4 Printable Document Container Box
-                  AppCard(
-                    padding: EdgeInsets.all(14.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Document Header
-                        Row(
-                          children: [
-                            Container(
-                              width: 32.w,
-                              height: 32.w,
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryLight,
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: Icon(
-                                Icons.apartment,
-                                color: AppColors.primary,
-                                size: 18.sp,
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                  // Pdf Preview Section
+                  Expanded(
+                    child: _isLoading
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
+                                const CircularProgressIndicator(
+                                  color: AppColors.primary,
+                                ),
+                                SizedBox(height: 12.h),
                                 Text(
-                                  'রহমান কন্ট্রাক্টর সার্ভিস',
+                                  'A4 PDF ডকুমেন্ট তৈরি হচ্ছে...',
                                   style: AppTextStyles.custom(
-                                    size: 14.sp,
+                                    size: 13.sp,
                                     color: AppColors.primary,
                                     weight: FontWeight.w700,
                                   ),
                                 ),
-                                Text('ঠিকাদার: রহমান আলী • 01712-345678',
-                                    style: AppTextStyles.custom(size: 10.sp)),
-                                Text('মিরপুর-১০, ঢাকা',
-                                    style: AppTextStyles.custom(size: 10.sp)),
                               ],
                             ),
-                          ],
-                        ),
-
-                        Divider(height: 16.h, color: AppColors.primary),
-
-                        // Document Title & Info Row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('মালামালের তালিকা',
-                                style: AppTextStyles.mediumBlackBold),
-                            Text('ML-2026-001 • ২৩ অক্টোবর ২০২৬',
-                                style: AppTextStyles.custom(size: 10.sp)),
-                          ],
-                        ),
-
-                        SizedBox(height: 10.h),
-
-                        // Client Brief Box
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(8.w),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF3F8),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          )
+                        : _errorMessage != null
+                        ? Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.w),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text('ক্লায়েন্ট:',
-                                      style: AppTextStyles.custom(size: 10.sp)),
-                                  Text('আব্দুল করিম',
-                                      style: AppTextStyles.mediumBlackBold),
-                                  Text('মোবাইল: 01812-345678',
-                                      style: AppTextStyles.custom(size: 10.sp)),
+                                  Icon(
+                                    Icons.error_outline_rounded,
+                                    color: Colors.red,
+                                    size: 32.sp,
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    'PDF জেনারেট করতে সমস্যা হয়েছে',
+                                    style: AppTextStyles.mediumBlackBold,
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  AppOutlinedButton(
+                                    onPressed: _generatePdf,
+                                    text: 'আবার চেষ্টা করুন',
+                                    icon: Icons.refresh_rounded,
+                                  ),
                                 ],
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('কাজের জন্য:',
-                                      style: AppTextStyles.custom(size: 10.sp)),
-                                  Text('করিমের বাসা',
-                                      style: AppTextStyles.mediumBlackBold),
-                                  Text('বাথরুমের পানির লাইন',
-                                      style: AppTextStyles.custom(size: 10.sp)),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(height: 12.h),
-
-                        // Materials Table
-                        _buildTableHeader(showPrice),
-                        Divider(height: 8.h, color: AppColors.border),
-                        _buildTableRow('1', 'PPR পাইপ\n২০ মিমি • RFL', '১০০', 'ফুট',
-                            showPrice, '৪০', '৪,০০০'),
-                        Divider(height: 8.h, color: AppColors.border),
-                        _buildTableRow('2', 'এলবো\n২০ মিমি • PPR', '১০', 'টি',
-                            showPrice, '৩৫', '৩৫০'),
-                        Divider(height: 8.h, color: AppColors.border),
-                        _buildTableRow('3', 'সকেট\n২০ মিমি • PPR', '১০', 'টি',
-                            showPrice, '২৫', '২৫০'),
-                        Divider(height: 8.h, color: AppColors.border),
-                        _buildTableRow('4', 'বল ভালভ\n২০ মিমি', '৪', 'টি',
-                            showPrice, '৩৫০', '১,৪০০'),
-
-                        if (showPrice) ...[
-                          Divider(height: 16.h, color: AppColors.primary),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('মালামালের আনুমানিক মোট:',
-                                  style: AppTextStyles.mediumBlackBold),
-                              Text('৳৬,৬৪০',
-                                  style: AppTextStyles.custom(
-                                      size: 15.sp,
-                                      color: AppColors.primary,
-                                      weight: FontWeight.w700)),
-                            ],
-                          ),
-                        ],
-
-                        SizedBox(height: 12.h),
-
-                        // Client Note Box in Document
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(8.w),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryLight,
-                            borderRadius: BorderRadius.circular(6.r),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('ক্লায়েন্টের জন্য নোট:',
-                                  style: AppTextStyles.mediumBlackBold),
-                              Text(
-                                'কেনার আগে সাইজ, পরিমাণ ও ব্র্যান্ড ঠিকাদারের সাথে মিলিয়ে নিন।',
-                                style: AppTextStyles.custom(size: 11.sp),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(height: 24.h),
-
-                        // Signature Lines
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              children: [
-                                Container(
-                                    width: 100.w,
-                                    height: 1.h,
-                                    color: AppColors.border),
-                                SizedBox(height: 4.h),
-                                Text('ক্লায়েন্ট / কর্মীর স্বাক্ষর',
-                                    style: AppTextStyles.custom(size: 10.sp)),
-                              ],
                             ),
-                            Column(
-                              children: [
-                                Container(
-                                    width: 100.w,
-                                    height: 1.h,
-                                    color: AppColors.border),
-                                SizedBox(height: 4.h),
-                                Text('ঠিকাদারের স্বাক্ষর',
-                                    style: AppTextStyles.custom(size: 10.sp)),
-                              ],
+                          )
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(4.r),
+
+                            child: PdfViewer.data(
+                              _cachedPdfBytes!,
+
+                              sourceName: 'material_list.pdf',
+
+                              params: PdfViewerParams(
+                                backgroundColor: Colors.transparent,
+                                pageDropShadow: null,
+                              ),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
                   ),
 
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 14.h),
 
-                  // Info Notice Box
+                  // Bottom Info Notice Box
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(12.w),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 12.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(12.r),
@@ -305,7 +219,7 @@ class _MaterialPdfPreviewScreenState extends State<MaterialPdfPreviewScreen> {
                         SizedBox(width: 8.w),
                         Expanded(
                           child: Text(
-                            'সব তথ্য দেখে তারপর শেয়ার করুন।',
+                            'সব তথ্য দেখে তারপর শেয়ার বা ডাউনলোড করুন।',
                             style: AppTextStyles.custom(
                               size: 12.sp,
                               color: AppColors.primary,
@@ -316,63 +230,69 @@ class _MaterialPdfPreviewScreenState extends State<MaterialPdfPreviewScreen> {
                     ),
                   ),
 
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 14.h),
 
-                  // Bottom Action Buttons
+                  // Bottom Action Buttons Row
                   Row(
                     children: [
-                      // Edit Info / Download Button
+                      // Download Button (User-accessible storage export)
                       Expanded(
-                        child: InkWell(
-                          onTap: () {
-                            Get.snackbar('ডাউনলোড', 'PDF ফাইলটি আপনার ডিভাইসে সেভ হয়েছে');
-                          },
-                          borderRadius: BorderRadius.circular(12.r),
-                          child: Container(
-                            height: 48.h,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(
-                                  color: AppColors.primary, width: 1.5),
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.download_rounded,
-                                    color: AppColors.primary, size: 18.sp),
-                                SizedBox(width: 6.w),
-                                Text(
-                                  'ডাউনলোড',
-                                  style: AppTextStyles.custom(
-                                    size: 14.sp,
-                                    color: AppColors.primary,
-                                    weight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        child: AppOutlinedButton(
+                          onPressed: _cachedPdfBytes == null
+                              ? () {}
+                              : () async {
+                                  try {
+                                    final String savedPath =
+                                        await PdfService.downloadPdf(
+                                          _cachedPdfBytes!,
+                                          filename,
+                                        );
+
+                                    Get.snackbar(
+                                      'PDF ডাউনলোড সম্পন্ন',
+                                      'ফাইলটি ডিভাইসের স্টোরেজে সেভ হয়েছে: $savedPath',
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      backgroundColor: AppColors.primary,
+                                      colorText: Colors.white,
+                                    );
+                                  } catch (e) {
+                                    Get.snackbar(
+                                      'ডাউনলোড ব্যর্থ',
+                                      'ফাইল সেভ করতে সমস্যা হয়েছে: $e',
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      backgroundColor: Colors.red,
+                                      colorText: Colors.white,
+                                    );
+                                  }
+                                },
+                          text: 'ডাউনলোড',
+                          icon: Icons.download_rounded,
                         ),
                       ),
+
                       SizedBox(width: 10.w),
-                      // Share Button
+
+                      // Share Button (Native OS Share Sheet)
                       Expanded(
                         child: AppPrimaryButton(
-                          onPressed: () {
-                            Get.snackbar(
-                              'PDF শেয়ার',
-                              'হোয়াটসঅ্যাপ বা অন্যান্য প্ল্যাটফর্মে PDF শেয়ার করা হচ্ছে',
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: AppColors.primary,
-                              colorText: Colors.white,
-                            );
-                            Future.delayed(
-                                const Duration(milliseconds: 1000), () {
-                              Get.until((route) =>
-                                  route.settings.name == AppRoutes.mainScreen);
-                            });
-                          },
+                          onPressed: _cachedPdfBytes == null
+                              ? () {}
+                              : () async {
+                                  try {
+                                    await PdfService.sharePdf(
+                                      _cachedPdfBytes!,
+                                      filename,
+                                    );
+                                  } catch (e) {
+                                    Get.snackbar(
+                                      'শেয়ার ব্যর্থ',
+                                      'PDF ফাইল শেয়ার করতে সমস্যা হয়েছে: $e',
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      backgroundColor: Colors.red,
+                                      colorText: Colors.white,
+                                    );
+                                  }
+                                },
                           text: 'PDF শেয়ার করুন',
                           icon: Icons.share_rounded,
                         ),
@@ -383,73 +303,6 @@ class _MaterialPdfPreviewScreenState extends State<MaterialPdfPreviewScreen> {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTableHeader(bool showPrice) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 4.w),
-      decoration: BoxDecoration(
-        color: AppColors.primaryLight,
-        borderRadius: BorderRadius.circular(4.r),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-              width: 20.w,
-              child: Text('#', style: AppTextStyles.mediumBlackBold)),
-          Expanded(
-              flex: 3,
-              child: Text('মালামালের নাম',
-                  style: AppTextStyles.mediumBlackBold)),
-          Expanded(
-              flex: 1,
-              child: Text('পরিমাণ', style: AppTextStyles.mediumBlackBold)),
-          Expanded(
-              flex: 1,
-              child: Text('একক', style: AppTextStyles.mediumBlackBold)),
-          if (showPrice) ...[
-            Expanded(
-                flex: 1,
-                child: Text('একক দাম', style: AppTextStyles.mediumBlackBold)),
-            Expanded(
-                flex: 1,
-                child: Text('মোট', style: AppTextStyles.mediumBlackBold)),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTableRow(String num, String name, String qty, String unit,
-      bool showPrice, String price, String total) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 4.w),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-              width: 20.w,
-              child: Text(num, style: AppTextStyles.custom(size: 11.sp))),
-          Expanded(
-              flex: 3,
-              child: Text(name, style: AppTextStyles.custom(size: 11.sp))),
-          Expanded(
-              flex: 1,
-              child: Text(qty, style: AppTextStyles.custom(size: 11.sp))),
-          Expanded(
-              flex: 1,
-              child: Text(unit, style: AppTextStyles.custom(size: 11.sp))),
-          if (showPrice) ...[
-            Expanded(
-                flex: 1,
-                child: Text(price, style: AppTextStyles.custom(size: 11.sp))),
-            Expanded(
-                flex: 1,
-                child: Text(total, style: AppTextStyles.custom(size: 11.sp))),
-          ],
         ],
       ),
     );

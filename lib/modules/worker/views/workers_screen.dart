@@ -6,228 +6,114 @@ import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
+import 'package:smart_contractor_app/core/widgets/app_tab_header.dart';
 import 'package:smart_contractor_app/core/widgets/app_text_field.dart';
+import 'package:smart_contractor_app/modules/worker/controllers/worker_controller.dart';
 import 'package:smart_contractor_app/modules/worker/models/worker_model.dart';
 
-class WorkersScreen extends StatefulWidget {
+class WorkersScreen extends StatelessWidget {
   const WorkersScreen({super.key});
 
   @override
-  State<WorkersScreen> createState() => _WorkersScreenState();
-}
-
-class _WorkersScreenState extends State<WorkersScreen> {
-  final TextEditingController searchController = TextEditingController();
-  int selectedFilterIndex = 0;
-
-  final List<String> filterLabels = ['সব', 'দৈনিক', 'মাসিক'];
-
-  final List<Map<String, dynamic>> workersData = [
-    {
-      'id': '1',
-      'name': 'রহিম মিয়া',
-      'subtitle': 'দৈনিক মজুরি • ৳৮০০',
-      'type': WageType.daily,
-      'amount': 3400,
-      'isAdvance': false,
-    },
-    {
-      'id': '2',
-      'name': 'করিম মিয়া',
-      'subtitle': 'দৈনিক মজুরি • ৳৭০০',
-      'type': WageType.daily,
-      'amount': 1200,
-      'isAdvance': false,
-    },
-    {
-      'id': '3',
-      'name': 'সেলিম মিয়া',
-      'subtitle': 'দৈনিক মজুরি • ৳৬০০',
-      'type': WageType.daily,
-      'amount': 800,
-      'isAdvance': false,
-    },
-    {
-      'id': '4',
-      'name': 'সোহেল মিয়া',
-      'subtitle': 'মাসিক মজুরি • ৳১৫,০০০',
-      'type': WageType.monthly,
-      'amount': 2000,
-      'isAdvance': true,
-    },
-    {
-      'id': '5',
-      'name': 'জামাল মিয়া',
-      'subtitle': 'দৈনিক মজুরি • ৳৯০০',
-      'type': WageType.daily,
-      'amount': 6200,
-      'isAdvance': false,
-    },
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    searchController.addListener(() {
-      setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    searchController.dispose();
-    super.dispose();
-  }
-
-  List<Map<String, dynamic>> get filteredWorkers {
-    final query = searchController.text.trim().toLowerCase();
-
-    return workersData.where((worker) {
-      // Filter tab
-      bool matchesType = true;
-      if (selectedFilterIndex == 1) {
-        matchesType = worker['type'] == WageType.daily;
-      } else if (selectedFilterIndex == 2) {
-        matchesType = worker['type'] == WageType.monthly;
-      }
-
-      // Search query
-      bool matchesSearch = query.isEmpty ||
-          (worker['name'] as String).toLowerCase().contains(query);
-
-      return matchesType && matchesSearch;
-    }).toList();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final workers = filteredWorkers;
+    Get.put(WorkerController());
 
     return SafeArea(
       bottom: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
-        child: Column(
-          children: [
-            // Top Header
-            _buildHeader(),
+      child: GetBuilder<WorkerController>(
+        builder: (controller) {
+          final workers = controller.filteredWorkers;
 
-            SizedBox(height: 12.h),
-
-            // Search Bar
-            _buildSearchBar(),
-
-            SizedBox(height: 10.h),
-
-            // Filter Tabs
-            _buildFilterTabs(),
-
-            SizedBox(height: 12.h),
-
-            // Summary Board
-            _buildSummaryBoard(),
-
-            SizedBox(height: 12.h),
-
-            // Worker Cards List
-            Expanded(
-              child: Stack(
-                children: [
-                  ListView.separated(
-                    padding: EdgeInsets.only(bottom: 72.h),
-                    itemCount: workers.length,
-                    separatorBuilder: (context, index) => SizedBox(height: 8.h),
-                    itemBuilder: (context, index) {
-                      final item = workers[index];
-                      return _buildWorkerCard(item);
+          return Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+            child: Column(
+              children: [
+                // Top Header
+                AppTabHeader(
+                  title: 'কর্মী',
+                  subtitle: 'সকল কর্মীর তালিকা ও হিসাব',
+                  icon: Icons.apartment,
+                  action: IconButton(
+                    onPressed: () {
+                      Get.toNamed(AppRoutes.bulkWorkerPaymentScreen);
                     },
-                  ),
-
-                  // Bottom Action Button
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 8.h,
-                    child: AppPrimaryButton(
-                      onPressed: () {
-                        Get.toNamed(AppRoutes.workerManagementScreen);
-                      },
-                      text: 'নতুন কর্মী যোগ করুন',
-                      icon: Icons.add,
+                    icon: Icon(
+                      Icons.payments_outlined,
+                      color: AppColors.primary,
+                      size: 24.sp,
                     ),
                   ),
-                ],
-              ),
+                ),
+
+                SizedBox(height: 12.h),
+
+                // Search Bar
+                _buildSearchBar(controller),
+
+                SizedBox(height: 10.h),
+
+                // Filter Tabs
+                _buildFilterTabs(controller),
+
+                SizedBox(height: 12.h),
+
+                // Workers List + Info Box + Floating Action Button
+                Expanded(
+                  child: Stack(
+                    children: [
+                      ListView(
+                        padding: EdgeInsets.only(bottom: 80.h),
+                        children: [
+                          // Worker Cards
+                          ...workers.map((worker) {
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: 8.h),
+                              child: _buildWorkerCard(worker),
+                            );
+                          }),
+
+                          SizedBox(height: 6.h),
+
+                          // Info Note Box
+                          _buildInfoNoteBox(),
+                        ],
+                      ),
+
+                      // Bottom Action Button
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 8.h,
+                        child: AppPrimaryButton(
+                          onPressed: () {
+                            Get.toNamed(AppRoutes.workerManagementScreen);
+                          },
+                          text: 'নতুন কর্মী যোগ করুন',
+                          icon: Icons.person_add_alt_1_rounded,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  // Top Header Bar
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        Container(
-          width: 42.w,
-          height: 42.w,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Icon(
-            Icons.apartment,
-            color: Colors.white,
-            size: 24.sp,
-          ),
-        ),
-        SizedBox(width: 12.w),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'কর্মী',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'কর্মীদের মজুরি ও বাকি',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
-        const Spacer(),
-        IconButton(
-          onPressed: () {
-            Get.toNamed(AppRoutes.bulkWorkerPaymentScreen);
-          },
-          tooltip: 'একসাথে টাকা দিন',
-          icon: Icon(
-            Icons.payments_outlined,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-      ],
-    );
-  }
-
   // Search Input Field
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(WorkerController controller) {
     return AppTextField(
-      controller: searchController,
+      controller: controller.searchController,
       hint: 'নাম বা মোবাইল দিয়ে খুঁজুন',
       icon: Icons.search_rounded,
     );
   }
 
   // Filter Tabs Bar
-  Widget _buildFilterTabs() {
+  Widget _buildFilterTabs(WorkerController controller) {
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
@@ -236,15 +122,11 @@ class _WorkersScreenState extends State<WorkersScreen> {
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
-        children: List.generate(filterLabels.length, (index) {
-          final isSelected = selectedFilterIndex == index;
+        children: List.generate(controller.filterLabels.length, (index) {
+          final isSelected = controller.selectedFilterIndex == index;
           return Expanded(
             child: InkWell(
-              onTap: () {
-                setState(() {
-                  selectedFilterIndex = index;
-                });
-              },
+              onTap: () => controller.setFilterIndex(index),
               borderRadius: BorderRadius.circular(9.r),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
@@ -255,7 +137,7 @@ class _WorkersScreenState extends State<WorkersScreen> {
                   borderRadius: BorderRadius.circular(9.r),
                 ),
                 child: Text(
-                  filterLabels[index],
+                  controller.filterLabels[index],
                   style: AppTextStyles.custom(
                     size: 12.sp,
                     color: isSelected ? Colors.white : AppColors.textSecondary,
@@ -270,177 +152,118 @@ class _WorkersScreenState extends State<WorkersScreen> {
     );
   }
 
-  // Summary Board (2 Cards)
-  Widget _buildSummaryBoard() {
-    return Row(
-      children: [
-        // Active Workers Card
-        Expanded(
-          child: AppCard(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 28.w,
-                      height: 28.w,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Icon(
-                        Icons.groups_outlined,
-                        color: AppColors.primary,
-                        size: 16.sp,
-                      ),
-                    ),
-                    SizedBox(width: 6.w),
-                    Expanded(
-                      child: Text(
-                        'সক্রিয় কর্মী',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.smallGrey.copyWith(fontSize: 11.sp),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 6.h),
-                Text(
-                  '১০ জন',
-                  style: AppTextStyles.custom(
-                    size: 20.sp,
-                    color: AppColors.primary,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        SizedBox(width: 8.w),
-
-        // Total Due Card
-        Expanded(
-          child: AppCard(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 28.w,
-                      height: 28.w,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFEBEB),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Icon(
-                        Icons.payments_outlined,
-                        color: Colors.red,
-                        size: 16.sp,
-                      ),
-                    ),
-                    SizedBox(width: 6.w),
-                    Expanded(
-                      child: Text(
-                        'মোট দিতে হবে',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.smallGrey.copyWith(fontSize: 11.sp),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 6.h),
-                Text(
-                  '৳৫,৪০০',
-                  style: AppTextStyles.custom(
-                    size: 20.sp,
-                    color: Colors.red,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   // Individual Worker Card
-  Widget _buildWorkerCard(Map<String, dynamic> item) {
-    final bool isAdvance = item['isAdvance'] as bool;
-    final int amount = item['amount'] as int;
+  Widget _buildWorkerCard(WorkerModel worker) {
+    final bool isDaily = worker.type == WorkerType.daily;
+    final String rateText = isDaily
+        ? 'দৈনিক ৳${worker.dailyRate.toStringAsFixed(0)}'
+        : 'মাসিক ৳${worker.monthlyRate.toStringAsFixed(0)}';
+
+    final String dueLabel = worker.dueAmount > 0
+        ? (worker.isDueToWorker
+            ? 'পাবে ৳${worker.dueAmount.toStringAsFixed(0)}'
+            : 'অগ্রিম ৳${worker.dueAmount.toStringAsFixed(0)}')
+        : 'হিসাব সমান';
+
+    final Color dueColor = worker.dueAmount == 0
+        ? const Color(0xFF079455)
+        : (worker.isDueToWorker ? Colors.red : AppColors.primary);
 
     return AppCard(
       onTap: () {
-        Get.toNamed(AppRoutes.workerDetailsScreen, arguments: item);
+        Get.toNamed(AppRoutes.workerDetailsScreen, arguments: worker);
       },
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 22.r,
-            backgroundColor: AppColors.primaryLight,
-            child: Icon(
-              Icons.person_outline_rounded,
-              size: 26.sp,
-              color: AppColors.primary,
-            ),
-          ),
-
-          SizedBox(width: 12.w),
-
-          // Worker Name & Wage Subtitle
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['name'] as String,
-                  style: AppTextStyles.custom(
-                    size: 16.sp,
-                    color: AppColors.textPrimary,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  item['subtitle'] as String,
-                  style: AppTextStyles.smallGrey,
-                ),
-              ],
-            ),
-          ),
-
-          // Due / Advance Amount Badge on Right
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '৳${amount.toStringAsFixed(0)}',
+                worker.name,
                 style: AppTextStyles.custom(
                   size: 16.sp,
-                  color: isAdvance ? const Color(0xFF079455) : Colors.red,
+                  color: AppColors.textPrimary,
                   weight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: 2.h),
+              _buildWorkerTypeBadge(isDaily),
+            ],
+          ),
+
+          SizedBox(height: 4.h),
+
+          Text(
+            '${worker.role} • ${worker.phone}',
+            style: AppTextStyles.mediumGrey,
+          ),
+
+          SizedBox(height: 10.h),
+
+          Row(
+            children: [
               Text(
-                isAdvance ? 'অগ্রিম আছে' : 'দিতে হবে',
+                rateText,
+                style: AppTextStyles.smallGrey,
+              ),
+              const Spacer(),
+              Text(
+                dueLabel,
                 style: AppTextStyles.custom(
-                  size: 11.sp,
-                  color: isAdvance
-                      ? const Color(0xFF079455)
-                      : AppColors.textSecondary,
+                  size: 14.sp,
+                  color: dueColor,
+                  weight: FontWeight.w700,
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkerTypeBadge(bool isDaily) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: isDaily ? AppColors.primaryLight : const Color(0xFFE8F8F0),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Text(
+        isDaily ? 'দৈনিক' : 'মাসিক',
+        style: AppTextStyles.custom(
+          size: 12.sp,
+          color: isDaily ? AppColors.primary : const Color(0xFF079455),
+          weight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoNoteBox() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            color: AppColors.primary,
+            size: 20.sp,
+          ),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              'কর্মীর যেকোনো পাওনা বা অগ্রিম টাকা এই তালিকায় দেখতে পাবেন।',
+              style: AppTextStyles.custom(
+                size: 12.sp,
+                color: AppColors.primary,
+              ),
+            ),
           ),
         ],
       ),

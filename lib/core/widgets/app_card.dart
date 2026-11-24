@@ -62,10 +62,10 @@ class AppCard extends StatelessWidget {
       child: onTap == null
           ? content
           : InkWell(
-        onTap: onTap,
-        customBorder: shape,
-        child: content,
-      ),
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(borderRadius.r),
+              child: content,
+            ),
     );
 
     if (margin == null) {

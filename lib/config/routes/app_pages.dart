@@ -22,12 +22,10 @@ import 'package:smart_contractor_app/modules/job/views/wage_and_expense_screen.d
 import 'package:smart_contractor_app/modules/material/views/custom_template_create_screen.dart';
 import 'package:smart_contractor_app/modules/material/views/direct_material_list_create_screen.dart';
 import 'package:smart_contractor_app/modules/material/views/material_item_add_edit_screen.dart';
-import 'package:smart_contractor_app/modules/material/views/material_items_edit_screen.dart';
+import 'package:smart_contractor_app/modules/material/views/material_items_list_screen.dart';
 import 'package:smart_contractor_app/modules/material/views/material_pdf_info_screen.dart';
 import 'package:smart_contractor_app/modules/material/views/material_pdf_preview_screen.dart';
-import 'package:smart_contractor_app/modules/material/views/material_template_categories_screen.dart';
-import 'package:smart_contractor_app/modules/material/views/material_template_detail_screen.dart';
-import 'package:smart_contractor_app/modules/material/views/material_template_list_screen.dart';
+import 'package:smart_contractor_app/modules/material/views/material_template_select_screen.dart';
 import 'package:smart_contractor_app/modules/material/views/my_material_templates_screen.dart';
 import 'package:smart_contractor_app/modules/material/views/my_template_details_screen.dart';
 import 'package:smart_contractor_app/modules/material/views/same_materials_merge_screen.dart';
@@ -78,14 +76,8 @@ class AppPages {
 
     // Material Wizard Pages
     GetPage(
-        name: AppRoutes.materialTemplateCategoriesScreen,
-        page: () => const MaterialTemplateCategoriesScreen()),
-    GetPage(
-        name: AppRoutes.materialTemplateListScreen,
-        page: () => const MaterialTemplateListScreen()),
-    GetPage(
-        name: AppRoutes.materialTemplateDetailScreen,
-        page: () => const MaterialTemplateDetailScreen()),
+        name: AppRoutes.materialTemplateSelectScreen,
+        page: () => const MaterialTemplateSelectScreen()),
     GetPage(
         name: AppRoutes.myMaterialTemplatesScreen,
         page: () => const MyMaterialTemplatesScreen()),
@@ -99,8 +91,8 @@ class AppPages {
         name: AppRoutes.directMaterialListCreateScreen,
         page: () => const DirectMaterialListCreateScreen()),
     GetPage(
-        name: AppRoutes.materialItemsEditScreen,
-        page: () => const MaterialItemsEditScreen()),
+        name: AppRoutes.materialItemsListScreen,
+        page: () => MaterialItemsListScreen()),
     GetPage(
         name: AppRoutes.materialItemAddEditScreen,
         page: () => const MaterialItemAddEditScreen()),

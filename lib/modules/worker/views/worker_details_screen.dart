@@ -5,93 +5,61 @@ import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
+import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
+import 'package:smart_contractor_app/core/widgets/app_outlined_button.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
 import 'package:smart_contractor_app/modules/main/controllers/main_controller.dart';
+import 'package:smart_contractor_app/modules/worker/controllers/worker_controller.dart';
 
-class WorkerDetailsScreen extends StatefulWidget {
+class WorkerDetailsScreen extends StatelessWidget {
   const WorkerDetailsScreen({super.key});
 
   @override
-  State<WorkerDetailsScreen> createState() => _WorkerDetailsScreenState();
-}
+  Widget build(BuildContext context) {
+    String workerName = 'রহিম মিয়া';
+    String workerRole = 'পাইপ মিস্ত্রি • দৈনিক ৳৮০০';
 
-class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
-  int selectedTabIndex = 0;
-
-  final List<String> tabLabels = ['হিসাব', 'হাজিরা', 'তথ্য'];
-
-  String workerName = 'রহিম মিয়া';
-  String workerRole = 'পাইপ মিস্ত্রি • দৈনিক ৳৮০০';
-
-  @override
-  void initState() {
-    super.initState();
     final args = Get.arguments;
     if (args is Map<String, dynamic>) {
       if (args.containsKey('name')) workerName = args['name'].toString();
       if (args.containsKey('subtitle')) workerRole = args['subtitle'].toString();
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'কর্মীর বিস্তারিত',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              workerName,
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
+      appBar: AppCustomAppBar(
+        title: 'কর্মীর বিস্তারিত',
+        subtitle: workerName,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Worker Brief Card
-            _buildWorkerBriefCard(),
+      body: GetBuilder<WorkerController>(
+        builder: (controller) {
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Worker Brief Card
+                _buildWorkerBriefCard(workerName, workerRole),
 
-            SizedBox(height: 12.h),
+                SizedBox(height: 12.h),
 
-            // 2. Navigation Tabs Bar
-            _buildNavigationTabs(),
+                // 2. Navigation Tabs Bar
+                _buildNavigationTabs(controller),
 
-            SizedBox(height: 16.h),
+                SizedBox(height: 16.h),
 
-            // 3. Dynamic Tab Content View
-            _buildTabContent(),
-          ],
-        ),
+                // 3. Dynamic Tab Content View
+                _buildTabContent(controller, workerName, workerRole),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
   // Brief Worker Card
-  Widget _buildWorkerBriefCard() {
+  Widget _buildWorkerBriefCard(String workerName, String workerRole) {
     return AppCard(
       child: Row(
         children: [
@@ -145,7 +113,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   }
 
   // Navigation Tabs Bar
-  Widget _buildNavigationTabs() {
+  Widget _buildNavigationTabs(WorkerController controller) {
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
@@ -154,15 +122,11 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
-        children: List.generate(tabLabels.length, (index) {
-          final isSelected = selectedTabIndex == index;
+        children: List.generate(controller.workerDetailsTabLabels.length, (index) {
+          final isSelected = controller.workerDetailsTabIndex == index;
           return Expanded(
             child: InkWell(
-              onTap: () {
-                setState(() {
-                  selectedTabIndex = index;
-                });
-              },
+              onTap: () => controller.setWorkerDetailsTabIndex(index),
               borderRadius: BorderRadius.circular(9.r),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
@@ -173,7 +137,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                   borderRadius: BorderRadius.circular(9.r),
                 ),
                 child: Text(
-                  tabLabels[index],
+                  controller.workerDetailsTabLabels[index],
                   style: AppTextStyles.custom(
                     size: 13.sp,
                     color: isSelected ? Colors.white : AppColors.textSecondary,
@@ -189,22 +153,20 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   }
 
   // Dynamic Tab Content Selector
-  Widget _buildTabContent() {
-    switch (selectedTabIndex) {
+  Widget _buildTabContent(WorkerController controller, String workerName, String workerRole) {
+    switch (controller.workerDetailsTabIndex) {
       case 1:
         return _buildAttendanceTab();
       case 2:
-        return _buildProfileInfoTab();
+        return _buildProfileInfoTab(workerName);
       case 0:
       default:
-        return _buildAccountsTab();
+        return _buildAccountsTab(workerName, workerRole);
     }
   }
 
-  // ==========================================
   // TAB 0: হিসাব (Accounts Tab)
-  // ==========================================
-  Widget _buildAccountsTab() {
+  Widget _buildAccountsTab(String workerName, String workerRole) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -398,38 +360,12 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
           children: [
             // Outlined PDF Button
             Expanded(
-              child: InkWell(
-                onTap: () {
+              child: AppOutlinedButton(
+                onPressed: () {
                   Get.toNamed(AppRoutes.workerLedgerPdfPreviewScreen);
                 },
-                borderRadius: BorderRadius.circular(12.r),
-                child: Container(
-                  height: 48.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: AppColors.primary, width: 1.5),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.description_outlined,
-                        color: AppColors.primary,
-                        size: 20.sp,
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'হিসাবের PDF',
-                        style: AppTextStyles.custom(
-                          size: 14.sp,
-                          color: AppColors.primary,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                text: 'হিসাবের PDF',
+                icon: Icons.description_outlined,
               ),
             ),
 
@@ -461,9 +397,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     );
   }
 
-  // ==========================================
   // TAB 1: হাজিরা (Attendance Logs Tab)
-  // ==========================================
   Widget _buildAttendanceTab() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -515,10 +449,8 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     );
   }
 
-  // ==========================================
   // TAB 2: তথ্য (Worker Info Profile Tab)
-  // ==========================================
-  Widget _buildProfileInfoTab() {
+  Widget _buildProfileInfoTab(String workerName) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

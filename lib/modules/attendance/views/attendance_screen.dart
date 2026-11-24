@@ -6,60 +6,12 @@ import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
 import 'package:smart_contractor_app/core/widgets/app_primary_button.dart';
+import 'package:smart_contractor_app/core/widgets/app_tab_header.dart';
+import 'package:smart_contractor_app/modules/attendance/controllers/attendance_controller.dart';
 import 'package:smart_contractor_app/modules/attendance/models/attendance_model.dart';
 
-class AttendanceScreen extends StatefulWidget {
+class AttendanceScreen extends StatelessWidget {
   const AttendanceScreen({super.key});
-
-  @override
-  State<AttendanceScreen> createState() => _AttendanceScreenState();
-}
-
-class _AttendanceScreenState extends State<AttendanceScreen> {
-  DateTime selectedDate = DateTime(2026, 10, 23);
-
-  List<AttendanceModel> attendanceList = [
-    const AttendanceModel(
-      id: '1',
-      workerName: 'রহিম মিয়া',
-      dailyRate: 800,
-      status: AttendanceStatus.fullDay,
-      jobName: 'করিমের বাসা',
-      amount: 800,
-    ),
-    const AttendanceModel(
-      id: '2',
-      workerName: 'করিম মিয়া',
-      dailyRate: 700,
-      status: AttendanceStatus.halfDay,
-      jobName: 'সেলিমের দোকান',
-      amount: 350,
-    ),
-    const AttendanceModel(
-      id: '3',
-      workerName: 'সেলিম মিয়া',
-      dailyRate: 600,
-      status: AttendanceStatus.fullDay,
-      jobName: 'হানিফের বাড়ি',
-      amount: 600,
-    ),
-    const AttendanceModel(
-      id: '4',
-      workerName: 'সোহেল মিয়া',
-      dailyRate: 900,
-      status: AttendanceStatus.absent,
-      jobName: 'ইলেক্ট্রিক্যাল ওয়্যারিং',
-      amount: 0,
-    ),
-  ];
-
-  final List<String> availableJobs = [
-    'করিমের বাসা',
-    'সেলিমের দোকান',
-    'হানিফের বাড়ি',
-    'রহিমার বাসা',
-    'টিউবওয়েল বসানো',
-  ];
 
   // Date Formatting Helper
   String _formatDate(DateTime date) {
@@ -81,10 +33,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   // Date Picker
-  Future<void> _selectDate(BuildContext context) async {
+  Future<void> _selectDate(
+      BuildContext context, AttendanceController controller) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate,
+      initialDate: controller.selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
       builder: (context, child) {
@@ -102,35 +55,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
 
     if (picked != null) {
-      setState(() {
-        selectedDate = picked;
-      });
+      controller.setSelectedDate(picked);
     }
   }
 
-  // Update Status for Specific Worker
-  void _updateWorkerStatus(int index, AttendanceStatus newStatus) {
-    setState(() {
-      final currentItem = attendanceList[index];
-      double calculatedAmount = 0;
-
-      if (newStatus == AttendanceStatus.fullDay) {
-        calculatedAmount = currentItem.dailyRate;
-      } else if (newStatus == AttendanceStatus.halfDay) {
-        calculatedAmount = currentItem.dailyRate / 2;
-      } else {
-        calculatedAmount = 0;
-      }
-
-      attendanceList[index] = currentItem.copyWith(
-        status: newStatus,
-        amount: calculatedAmount,
-      );
-    });
-  }
-
   // Change Job for Specific Worker
-  void _showJobSelectionBottomSheet(int index) {
+  void _showJobSelectionBottomSheet(
+      BuildContext context, AttendanceController controller, int index) {
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -145,7 +76,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             children: [
               Text('কাজ নির্বাচন করুন', style: AppTextStyles.mediumBlackBold),
               SizedBox(height: 12.h),
-              ...availableJobs.map((job) {
+              ...controller.availableJobs.map((job) {
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: AppColors.primaryLight,
@@ -154,10 +85,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ),
                   title: Text(job, style: AppTextStyles.mediumBlack),
                   onTap: () {
-                    setState(() {
-                      attendanceList[index] =
-                          attendanceList[index].copyWith(jobName: job);
-                    });
+                    controller.updateWorkerJob(index, job);
                     Get.back();
                   },
                 );
@@ -171,132 +99,100 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic Present & Absent Counts
-    final int presentCount = attendanceList
-        .where((item) => item.status != AttendanceStatus.absent)
-        .length;
-    final int absentCount = attendanceList
-        .where((item) => item.status == AttendanceStatus.absent)
-        .length;
+    Get.put(AttendanceController());
 
     return SafeArea(
       bottom: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top Header Bar
-            _buildHeader(),
+      child: GetBuilder<AttendanceController>(
+        builder: (controller) {
+          final int presentCount = controller.presentCount;
+          final int absentCount = controller.absentCount;
 
-            SizedBox(height: 12.h),
+          return Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Header Bar
+                const AppTabHeader(
+                  title: 'হাজিরা',
+                  subtitle: 'তারিখ বেছে হাজিরা দিন',
+                  icon: Icons.apartment,
+                ),
 
-            // Date Field
-            Text('তারিখ', style: AppTextStyles.mediumBlackBold),
-            SizedBox(height: 6.h),
-            _buildDateSelectorBox(),
+                SizedBox(height: 12.h),
 
-            SizedBox(height: 12.h),
+                // Date Field
+                Text('তারিখ', style: AppTextStyles.mediumBlackBold),
+                SizedBox(height: 6.h),
+                _buildDateSelectorBox(context, controller),
 
-            // Summary Board (2 Cards)
-            _buildSummaryBoard(presentCount, absentCount),
+                SizedBox(height: 12.h),
 
-            SizedBox(height: 12.h),
+                // Summary Board (2 Cards)
+                _buildSummaryBoard(presentCount, absentCount),
 
-            // Worker Attendance Cards List
-            Expanded(
-              child: Stack(
-                children: [
-                  ListView(
-                    padding: EdgeInsets.only(bottom: 80.h),
+                SizedBox(height: 12.h),
+
+                // Worker Attendance Cards List
+                Expanded(
+                  child: Stack(
                     children: [
-                      ...List.generate(attendanceList.length, (index) {
-                        final item = attendanceList[index];
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: 10.h),
-                          child: _buildWorkerAttendanceCard(item, index),
-                        );
-                      }),
+                      ListView(
+                        padding: EdgeInsets.only(bottom: 80.h),
+                        children: [
+                          ...List.generate(controller.attendanceList.length,
+                              (index) {
+                            final item = controller.attendanceList[index];
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: 10.h),
+                              child: _buildWorkerAttendanceCard(
+                                  context, controller, item, index),
+                            );
+                          }),
 
-                      SizedBox(height: 4.h),
+                          SizedBox(height: 4.h),
 
-                      // Info Notice Box
-                      _buildInfoNoticeBox(),
+                          // Info Notice Box
+                          _buildInfoNoticeBox(),
+                        ],
+                      ),
+
+                      // Bottom Action Button
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 8.h,
+                        child: AppPrimaryButton(
+                          onPressed: () {
+                            Get.snackbar(
+                              'হাজিরা সংরক্ষিত',
+                              '${_formatDate(controller.selectedDate)} তারিখের হাজিরা সফলভাবে সেভ করা হয়েছে',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: AppColors.primary,
+                              colorText: Colors.white,
+                            );
+                          },
+                          text: 'হাজিরা সেভ করুন',
+                          icon: Icons.check_rounded,
+                        ),
+                      ),
                     ],
                   ),
-
-                  // Bottom Action Button
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 8.h,
-                    child: AppPrimaryButton(
-                      onPressed: () {
-                        Get.snackbar(
-                          'হাজিরা সংরক্ষিত',
-                          '${_formatDate(selectedDate)} তারিখের হাজিরা সফলভাবে সেভ করা হয়েছে',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: AppColors.primary,
-                          colorText: Colors.white,
-                        );
-                      },
-                      text: 'হাজিরা সেভ করুন',
-                      icon: Icons.check_rounded,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  // Top Header Bar
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        Container(
-          width: 42.w,
-          height: 42.w,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Icon(
-            Icons.apartment,
-            color: Colors.white,
-            size: 24.sp,
-          ),
-        ),
-        SizedBox(width: 12.w),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'হাজিরা',
-              style: AppTextStyles.custom(
-                size: 20.sp,
-                color: AppColors.textPrimary,
-                weight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'তারিখ বেছে হাজিরা দিন',
-              style: AppTextStyles.smallGrey,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   // Date Selector Box
-  Widget _buildDateSelectorBox() {
+  Widget _buildDateSelectorBox(
+      BuildContext context, AttendanceController controller) {
     return InkWell(
-      onTap: () => _selectDate(context),
+      onTap: () => _selectDate(context, controller),
       borderRadius: BorderRadius.circular(12.r),
       child: Container(
         height: 52.h,
@@ -316,7 +212,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             SizedBox(width: 10.w),
             Expanded(
               child: Text(
-                _formatDate(selectedDate),
+                _formatDate(controller.selectedDate),
                 style: AppTextStyles.mediumBlackBold,
               ),
             ),
@@ -422,7 +318,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   // Individual Worker Attendance Card
-  Widget _buildWorkerAttendanceCard(AttendanceModel item, int index) {
+  Widget _buildWorkerAttendanceCard(BuildContext context,
+      AttendanceController controller, AttendanceModel item, int index) {
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,20 +368,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 _buildStatusToggleOption(
                   label: 'পূর্ণ দিন',
                   isSelected: item.status == AttendanceStatus.fullDay,
-                  onTap: () =>
-                      _updateWorkerStatus(index, AttendanceStatus.fullDay),
+                  onTap: () => controller.updateWorkerStatus(
+                      index, AttendanceStatus.fullDay),
                 ),
                 _buildStatusToggleOption(
                   label: 'অর্ধেক দিন',
                   isSelected: item.status == AttendanceStatus.halfDay,
-                  onTap: () =>
-                      _updateWorkerStatus(index, AttendanceStatus.halfDay),
+                  onTap: () => controller.updateWorkerStatus(
+                      index, AttendanceStatus.halfDay),
                 ),
                 _buildStatusToggleOption(
                   label: 'আসেননি',
                   isSelected: item.status == AttendanceStatus.absent,
-                  onTap: () =>
-                      _updateWorkerStatus(index, AttendanceStatus.absent),
+                  onTap: () => controller.updateWorkerStatus(
+                      index, AttendanceStatus.absent),
                 ),
               ],
             ),
@@ -494,7 +391,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
           // Assigned Job & Amount Box
           InkWell(
-            onTap: () => _showJobSelectionBottomSheet(index),
+            onTap: () =>
+                _showJobSelectionBottomSheet(context, controller, index),
             borderRadius: BorderRadius.circular(10.r),
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),

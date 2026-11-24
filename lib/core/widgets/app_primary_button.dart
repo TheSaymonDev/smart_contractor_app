@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:smart_contractor_app/core/utils/app_colors.dart';
 
-
 class AppPrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
   final IconData? icon;
+  final double? fontSize;
 
   const AppPrimaryButton({
     super.key,
     required this.onPressed,
     required this.text,
     this.icon,
+    this.fontSize,
   });
 
   @override
@@ -25,6 +26,7 @@ class AppPrimaryButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(horizontal: 10.w),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10.r),
           ),
@@ -36,19 +38,26 @@ class AppPrimaryButton extends StatelessWidget {
             if (icon != null) ...[
               Icon(
                 icon,
-                size: 20.sp,
+                size: 18.sp,
               ),
-              SizedBox(width: 10.w),
+              SizedBox(width: 6.w),
             ],
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w700,
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: fontSize ?? 15.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ),
           ],
-        )
+        ),
       ),
     );
   }
