@@ -6,6 +6,7 @@ import 'package:smart_contractor_app/core/utils/app_colors.dart';
 import 'package:smart_contractor_app/core/utils/app_text_styles.dart';
 import 'package:smart_contractor_app/core/widgets/app_card.dart';
 import 'package:smart_contractor_app/core/widgets/app_custom_app_bar.dart';
+import 'package:smart_contractor_app/modules/auth/services/auth_session.dart';
 
 class SettingsAndHelpScreen extends StatelessWidget {
   const SettingsAndHelpScreen({super.key});
@@ -250,7 +251,10 @@ class SettingsAndHelpScreen extends StatelessWidget {
             // 6. Bottom Logout Button
             InkWell(
               onTap: () {
-                Get.until((route) => route.settings.name == AppRoutes.logInScreen);
+                if (Get.isRegistered<AuthSession>()) {
+                  Get.find<AuthSession>().clear();
+                }
+                Get.offAllNamed(AppRoutes.logInScreen);
               },
               borderRadius: BorderRadius.circular(12.r),
               child: Container(

@@ -21,9 +21,6 @@ class DioClient {
       ),
     );
 
-    _dio.interceptors.add(
-      LogInterceptor(responseBody: true, requestBody: true),
-    );
   }
 
   Future<Response> get(

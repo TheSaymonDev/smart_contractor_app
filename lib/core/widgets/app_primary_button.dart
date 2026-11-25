@@ -4,8 +4,9 @@ import 'package:smart_contractor_app/core/utils/app_colors.dart';
 
 class AppPrimaryButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final IconData? icon;
+  final bool isLoading;
   final double? fontSize;
 
   const AppPrimaryButton({
@@ -13,6 +14,7 @@ class AppPrimaryButton extends StatelessWidget {
     required this.onPressed,
     required this.text,
     this.icon,
+    this.isLoading = false,
     this.fontSize,
   });
 
@@ -22,7 +24,7 @@ class AppPrimaryButton extends StatelessWidget {
       width: double.infinity,
       height: 45.h,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -35,7 +37,13 @@ class AppPrimaryButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[
+            if (isLoading) ...[
+              SizedBox.square(
+                dimension: 16.sp,
+                child: const CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 8.w),
+            ] else if (icon != null) ...[
               Icon(
                 icon,
                 size: 18.sp,

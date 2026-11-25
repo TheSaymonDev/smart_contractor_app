@@ -2,6 +2,12 @@ import 'package:get/get.dart';
 import 'package:smart_contractor_app/config/routes/app_routes.dart';
 import 'package:smart_contractor_app/modules/attendance/views/attendance_screen.dart';
 import 'package:smart_contractor_app/modules/attendance/views/split_wage_screen.dart';
+import 'package:smart_contractor_app/modules/auth/bindings/business_setup_binding.dart';
+import 'package:smart_contractor_app/modules/auth/bindings/forgot_password_binding.dart';
+import 'package:smart_contractor_app/modules/auth/bindings/log_in_binding.dart';
+import 'package:smart_contractor_app/modules/auth/bindings/otp_verification_binding.dart';
+import 'package:smart_contractor_app/modules/auth/bindings/registration_binding.dart';
+import 'package:smart_contractor_app/modules/auth/bindings/reset_password_binding.dart';
 import 'package:smart_contractor_app/modules/auth/views/business_setup_screen.dart';
 import 'package:smart_contractor_app/modules/auth/views/forgot_password_screen.dart';
 import 'package:smart_contractor_app/modules/auth/views/log_in_screen.dart';
@@ -44,66 +50,157 @@ import 'package:smart_contractor_app/modules/worker/views/worker_payment_screen.
 
 class AppPages {
   static final pages = [
-    GetPage(name: AppRoutes.logInScreen, page: () => const LogInScreen()),
-    GetPage(name: AppRoutes.registrationScreen, page: () => const RegistrationScreen()),
-    GetPage(name: AppRoutes.businessSetupScreen, page: () => const BusinessSetupScreen()),
-    GetPage(name: AppRoutes.forgotPasswordScreen, page: () => const ForgotPasswordScreen()),
-    GetPage(name: AppRoutes.otpVerificationScreen, page: () => const OtpVerificationScreen()),
-    GetPage(name: AppRoutes.resetPasswordScreen, page: () => const ResetPasswordScreen()),
+    GetPage(
+      name: AppRoutes.logInScreen,
+      page: () => const LogInScreen(),
+      binding: LogInBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.registrationScreen,
+      page: () => const RegistrationScreen(),
+      binding: RegistrationBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.businessSetupScreen,
+      page: () => const BusinessSetupScreen(),
+      binding: BusinessSetupBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.forgotPasswordScreen,
+      page: () => const ForgotPasswordScreen(),
+      binding: ForgotPasswordBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.otpVerificationScreen,
+      page: () => const OtpVerificationScreen(),
+      binding: OtpVerificationBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.resetPasswordScreen,
+      page: () => const ResetPasswordScreen(),
+      binding: ResetPasswordBinding(),
+    ),
     GetPage(name: AppRoutes.mainScreen, page: () => const MainScreen()),
     GetPage(name: AppRoutes.homeScreen, page: () => const HomeScreen()),
-    GetPage(name: AppRoutes.jobManagementScreen, page: () => const JobManagementScreen()),
-    GetPage(name: AppRoutes.workerManagementScreen, page: () => const WorkerManagementScreen()),
-    GetPage(name: AppRoutes.workerDetailsScreen, page: () => const WorkerDetailsScreen()),
-    GetPage(name: AppRoutes.jobDetailsScreen, page: () => const JobDetailsScreen()),
-    GetPage(name: AppRoutes.attendanceScreen, page: () => const AttendanceScreen()),
-    GetPage(name: AppRoutes.clientPaymentScreen, page: () => const ClientPaymentScreen()),
-    GetPage(name: AppRoutes.wageAndExpenseScreen, page: () => const WageAndExpenseScreen()),
-    GetPage(name: AppRoutes.splitWageScreen, page: () => const SplitWageScreen()),
-    GetPage(name: AppRoutes.monthlySalaryAdjustmentScreen, page: () => const MonthlySalaryAdjustmentScreen()),
-    GetPage(name: AppRoutes.workerPaymentScreen, page: () => const WorkerPaymentScreen()),
-    GetPage(name: AppRoutes.bulkWorkerPaymentScreen, page: () => const BulkWorkerPaymentScreen()),
-    GetPage(name: AppRoutes.workerPaymentHistoryScreen, page: () => const WorkerPaymentHistoryScreen()),
+    GetPage(
+      name: AppRoutes.jobManagementScreen,
+      page: () => const JobManagementScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.workerManagementScreen,
+      page: () => const WorkerManagementScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.workerDetailsScreen,
+      page: () => const WorkerDetailsScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.jobDetailsScreen,
+      page: () => const JobDetailsScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.attendanceScreen,
+      page: () => const AttendanceScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.clientPaymentScreen,
+      page: () => const ClientPaymentScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.wageAndExpenseScreen,
+      page: () => const WageAndExpenseScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.splitWageScreen,
+      page: () => const SplitWageScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.monthlySalaryAdjustmentScreen,
+      page: () => const MonthlySalaryAdjustmentScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.workerPaymentScreen,
+      page: () => const WorkerPaymentScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.bulkWorkerPaymentScreen,
+      page: () => const BulkWorkerPaymentScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.workerPaymentHistoryScreen,
+      page: () => const WorkerPaymentHistoryScreen(),
+    ),
     GetPage(name: AppRoutes.clientsScreen, page: () => const ClientsScreen()),
-    GetPage(name: AppRoutes.clientManagementScreen, page: () => const ClientManagementScreen()),
-    GetPage(name: AppRoutes.clientDetailsScreen, page: () => const ClientDetailsScreen()),
-    GetPage(name: AppRoutes.generatedPdfListScreen, page: () => const GeneratedPdfListScreen()),
-    GetPage(name: AppRoutes.finalBillPdfPreviewScreen, page: () => const FinalBillPdfPreviewScreen()),
-    GetPage(name: AppRoutes.paymentReceiptPdfPreviewScreen, page: () => const PaymentReceiptPdfPreviewScreen()),
-    GetPage(name: AppRoutes.workerLedgerPdfPreviewScreen, page: () => const WorkerLedgerPdfPreviewScreen()),
+    GetPage(
+      name: AppRoutes.clientManagementScreen,
+      page: () => const ClientManagementScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.clientDetailsScreen,
+      page: () => const ClientDetailsScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.generatedPdfListScreen,
+      page: () => const GeneratedPdfListScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.finalBillPdfPreviewScreen,
+      page: () => const FinalBillPdfPreviewScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.paymentReceiptPdfPreviewScreen,
+      page: () => const PaymentReceiptPdfPreviewScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.workerLedgerPdfPreviewScreen,
+      page: () => const WorkerLedgerPdfPreviewScreen(),
+    ),
     GetPage(name: AppRoutes.reportsScreen, page: () => const ReportsScreen()),
-    GetPage(name: AppRoutes.settingsAndHelpScreen, page: () => const SettingsAndHelpScreen()),
+    GetPage(
+      name: AppRoutes.settingsAndHelpScreen,
+      page: () => const SettingsAndHelpScreen(),
+    ),
 
     // Material Wizard Pages
     GetPage(
-        name: AppRoutes.materialTemplateSelectScreen,
-        page: () => const MaterialTemplateSelectScreen()),
+      name: AppRoutes.materialTemplateSelectScreen,
+      page: () => const MaterialTemplateSelectScreen(),
+    ),
     GetPage(
-        name: AppRoutes.myMaterialTemplatesScreen,
-        page: () => const MyMaterialTemplatesScreen()),
+      name: AppRoutes.myMaterialTemplatesScreen,
+      page: () => const MyMaterialTemplatesScreen(),
+    ),
     GetPage(
-        name: AppRoutes.myTemplateDetailsScreen,
-        page: () => const MyTemplateDetailsScreen()),
+      name: AppRoutes.myTemplateDetailsScreen,
+      page: () => const MyTemplateDetailsScreen(),
+    ),
     GetPage(
-        name: AppRoutes.customTemplateCreateScreen,
-        page: () => const CustomTemplateCreateScreen()),
+      name: AppRoutes.customTemplateCreateScreen,
+      page: () => const CustomTemplateCreateScreen(),
+    ),
     GetPage(
-        name: AppRoutes.directMaterialListCreateScreen,
-        page: () => const DirectMaterialListCreateScreen()),
+      name: AppRoutes.directMaterialListCreateScreen,
+      page: () => const DirectMaterialListCreateScreen(),
+    ),
     GetPage(
-        name: AppRoutes.materialItemsListScreen,
-        page: () => MaterialItemsListScreen()),
+      name: AppRoutes.materialItemsListScreen,
+      page: () => MaterialItemsListScreen(),
+    ),
     GetPage(
-        name: AppRoutes.materialItemAddEditScreen,
-        page: () => const MaterialItemAddEditScreen()),
+      name: AppRoutes.materialItemAddEditScreen,
+      page: () => const MaterialItemAddEditScreen(),
+    ),
     GetPage(
-        name: AppRoutes.sameMaterialsMergeScreen,
-        page: () => const SameMaterialsMergeScreen()),
+      name: AppRoutes.sameMaterialsMergeScreen,
+      page: () => const SameMaterialsMergeScreen(),
+    ),
     GetPage(
-        name: AppRoutes.materialPdfInfoScreen,
-        page: () => const MaterialPdfInfoScreen()),
+      name: AppRoutes.materialPdfInfoScreen,
+      page: () => const MaterialPdfInfoScreen(),
+    ),
     GetPage(
-        name: AppRoutes.materialPdfPreviewScreen,
-        page: () => const MaterialPdfPreviewScreen()),
+      name: AppRoutes.materialPdfPreviewScreen,
+      page: () => const MaterialPdfPreviewScreen(),
+    ),
   ];
 }

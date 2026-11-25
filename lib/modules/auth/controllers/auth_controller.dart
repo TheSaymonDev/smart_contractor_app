@@ -2,13 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:smart_contractor_app/config/routes/app_routes.dart';
+import 'package:smart_contractor_app/core/constants/api_endpoints.dart';
+import 'package:smart_contractor_app/core/network/api_exceptions.dart';
+import 'package:smart_contractor_app/core/network/dio_client.dart';
+import 'package:smart_contractor_app/modules/auth/utils/auth_phone.dart';
 
 class AuthController extends GetxController {
-  // Login State & Controllers
-  late TextEditingController loginPhoneController;
-  late TextEditingController loginPasswordController;
-  bool isLoginPasswordObscured = true;
-
   // Registration State & Controllers
   late TextEditingController regNameController;
   late TextEditingController regPhoneController;
@@ -39,9 +38,6 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     // Initialize Controllers
-    loginPhoneController = TextEditingController();
-    loginPasswordController = TextEditingController();
-
     regNameController = TextEditingController();
     regPhoneController = TextEditingController();
     regPasswordController = TextEditingController();
@@ -64,9 +60,6 @@ class AuthController extends GetxController {
   @override
   void onClose() {
     // Dispose Controllers & Timers
-    loginPhoneController.dispose();
-    loginPasswordController.dispose();
-
     regNameController.dispose();
     regPhoneController.dispose();
     regPasswordController.dispose();
@@ -88,10 +81,36 @@ class AuthController extends GetxController {
     super.onClose();
   }
 
-  // Login Toggles
-  void toggleLoginPasswordVisibility() {
-    isLoginPasswordObscured = !isLoginPasswordObscured;
-    update();
+  static String? normalizeRegistrationPhone(String phone) =>
+      normalizeAuthPhone(phone);
+
+  Future<String> register() async {
+    final phone = normalizeRegistrationPhone(regPhoneController.text);
+    if (phone == null) {
+      throw ApiException('সঠিক বাংলাদেশি মোবাইল নম্বর লিখুন');
+    }
+
+    final response = await DioClient().post(
+      ApiEndpoints.register,
+      data: {
+        'name': regNameController.text.trim(),
+        'phone': phone,
+        'password': regPasswordController.text,
+      },
+    );
+    final body = response.data;
+    if (body is Map && body['success'] == false) {
+      throw ApiException.fromResponse(response.statusCode, body);
+    }
+    final data = body is Map ? body['data'] : null;
+    if (body is! Map ||
+        body['success'] != true ||
+        data is! Map ||
+        data['userId'] is! String ||
+        (data['userId'] as String).isEmpty) {
+      throw ApiException('সার্ভার থেকে নিবন্ধনের ফল নিশ্চিত করা যায়নি');
+    }
+    return phone;
   }
 
   // Registration Toggles

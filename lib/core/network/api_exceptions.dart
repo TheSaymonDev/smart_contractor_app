@@ -2,8 +2,9 @@ import 'package:dio/dio.dart';
 
 class ApiException implements Exception {
   final String message;
+  final int? statusCode;
 
-  ApiException(this.message);
+  ApiException(this.message, {this.statusCode});
 
   factory ApiException.fromDioException(DioException dioError) {
     switch (dioError.type) {
@@ -14,17 +15,28 @@ class ApiException implements Exception {
       case DioExceptionType.sendTimeout:
         return ApiException('ইন্টারনেট সংযোগ অত্যন্ত ধীর। আবার চেষ্টা করুন');
       case DioExceptionType.badResponse:
-        return ApiException(
-          _handleStatusCode(
-            dioError.response?.statusCode,
-            dioError.response?.data,
-          ),
+        return ApiException.fromResponse(
+          dioError.response?.statusCode,
+          dioError.response?.data,
         );
       case DioExceptionType.connectionError:
         return ApiException('কোনো ইন্টারনেট সংযোগ পাওয়া যায়নি');
       default:
         return ApiException('একটি অনাকাঙ্ক্ষিত সমস্যা ঘটেছে');
     }
+  }
+
+  factory ApiException.fromResponse(int? statusCode, dynamic responseData) {
+    if (responseData is Map && responseData['error'] is Map) {
+      final message = (responseData['error'] as Map)['message'];
+      if (message is String && message.trim().isNotEmpty) {
+        return ApiException(message, statusCode: statusCode);
+      }
+    }
+    return ApiException(
+      _handleStatusCode(statusCode, responseData),
+      statusCode: statusCode,
+    );
   }
 
   static String _handleStatusCode(int? statusCode, dynamic responseData) {
@@ -40,6 +52,10 @@ class ApiException implements Exception {
         return 'আপনার এই সার্ভিসটি ব্যবহারের অনুমতি নেই';
       case 404:
         return 'অনুরোধকৃত তথ্যটি পাওয়া যায়নি';
+      case 409:
+        return 'এই তথ্য দিয়ে ইতিমধ্যে একটি রেকর্ড আছে';
+      case 429:
+        return 'অনেকবার চেষ্টা করা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন';
       case 500:
         return 'সার্ভারে অভ্যন্তরীণ সমস্যা তৈরি হয়েছে';
       default:
