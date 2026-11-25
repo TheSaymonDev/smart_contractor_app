@@ -2,7 +2,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:file_saver/file_saver.dart';
 import 'package:flutter/services.dart';
 
 import 'package:flutter/foundation.dart'
@@ -143,29 +142,39 @@ class PdfService {
     return bytes;
   }
 
-  /// Save the generated PDF bytes using the
-  /// existing file_saver package.
+  /// Exports the PDF to a location accessible from the device's Files app.
+  /// Returns null when the system save picker is cancelled.
+  static Future<String?> downloadPdf(
+    Uint8List pdfBytes,
+    String filename,
+  ) async {
+    if (pdfBytes.isEmpty) {
+      throw ArgumentError('Cannot save an empty PDF.');
+    }
 
-  static Future<String> downloadPdf(
-      Uint8List pdfBytes,
-      String filename,
-      ) async {
+    final name = filename.replaceAll(RegExp(r'[\\/\x00-\x1f]'), '_').trim();
+    final baseName = name.isEmpty ? 'document' : name;
 
-    final String sanitizedFilename =
-    filename.replaceAll(
-      RegExp(r'[^\w\s\-]'),
-      '_',
-    );
+    if (Platform.isAndroid) {
+      const channel = MethodChannel('smart_contractor/pdf_export');
+      return channel.invokeMethod<String>('savePdf', {
+        'name': '$baseName.pdf',
+        'bytes': pdfBytes,
+      });
+    }
 
-    final String path =
-    await FileSaver.instance.saveFile(
-      name: sanitizedFilename,
-      bytes: pdfBytes,
-      ext: 'pdf',
-      mimeType: MimeType.pdf,
-    );
+    if (Platform.isIOS) {
+      final documents = await getApplicationDocumentsDirectory();
+      var file = File('${documents.path}/$baseName.pdf');
+      var suffix = 1;
+      while (await file.exists()) {
+        file = File('${documents.path}/$baseName (${suffix++}).pdf');
+      }
+      await file.writeAsBytes(pdfBytes, flush: true);
+      return 'Files → On My iPhone/iPad → Smart Contractor App';
+    }
 
-    return path;
+    throw UnsupportedError('PDF export is supported on Android and iOS.');
   }
 
   /// Share the exact PDF bytes through

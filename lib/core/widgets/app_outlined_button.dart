@@ -4,7 +4,7 @@ import 'package:smart_contractor_app/core/utils/app_colors.dart';
 
 class AppOutlinedButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final IconData? icon;
   final Color? color;
   final double? fontSize;

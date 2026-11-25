@@ -25,6 +25,7 @@ class MaterialPdfPreviewScreen extends StatefulWidget {
 class _MaterialPdfPreviewScreenState extends State<MaterialPdfPreviewScreen> {
   Uint8List? _cachedPdfBytes;
   bool _isLoading = true;
+  bool _isSaving = false;
   String? _errorMessage;
 
   @override
@@ -95,6 +96,39 @@ class _MaterialPdfPreviewScreenState extends State<MaterialPdfPreviewScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _downloadPdf(String filename) async {
+    final bytes = _cachedPdfBytes;
+    if (bytes == null || _isSaving) return;
+
+    setState(() => _isSaving = true);
+    try {
+      final location = await PdfService.downloadPdf(bytes, filename);
+      if (!mounted || location == null) return;
+
+      Get.snackbar(
+        'PDF ডাউনলোড সম্পন্ন',
+        location.isEmpty
+            ? 'নির্বাচিত ফোল্ডারে PDF সেভ হয়েছে।'
+            : '$location ফোল্ডারে PDF সেভ হয়েছে।',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.primary,
+        colorText: Colors.white,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      Get.snackbar(
+        'ডাউনলোড ব্যর্থ',
+        'ফাইল সেভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      debugPrint('PDF export failed: $error');
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -235,37 +269,12 @@ class _MaterialPdfPreviewScreenState extends State<MaterialPdfPreviewScreen> {
                   // Bottom Action Buttons Row
                   Row(
                     children: [
-                      // Download Button (User-accessible storage export)
                       Expanded(
                         child: AppOutlinedButton(
-                          onPressed: _cachedPdfBytes == null
-                              ? () {}
-                              : () async {
-                                  try {
-                                    final String savedPath =
-                                        await PdfService.downloadPdf(
-                                          _cachedPdfBytes!,
-                                          filename,
-                                        );
-
-                                    Get.snackbar(
-                                      'PDF ডাউনলোড সম্পন্ন',
-                                      'ফাইলটি ডিভাইসের স্টোরেজে সেভ হয়েছে: $savedPath',
-                                      snackPosition: SnackPosition.BOTTOM,
-                                      backgroundColor: AppColors.primary,
-                                      colorText: Colors.white,
-                                    );
-                                  } catch (e) {
-                                    Get.snackbar(
-                                      'ডাউনলোড ব্যর্থ',
-                                      'ফাইল সেভ করতে সমস্যা হয়েছে: $e',
-                                      snackPosition: SnackPosition.BOTTOM,
-                                      backgroundColor: Colors.red,
-                                      colorText: Colors.white,
-                                    );
-                                  }
-                                },
-                          text: 'ডাউনলোড',
+                          onPressed: _cachedPdfBytes == null || _isSaving
+                              ? null
+                              : () => _downloadPdf(filename),
+                          text: _isSaving ? 'সেভ হচ্ছে…' : 'ডাউনলোড',
                           icon: Icons.download_rounded,
                         ),
                       ),
